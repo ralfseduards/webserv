@@ -24,6 +24,13 @@ int main(void) {
       return (1);
     //should be refactored
     for (size_t i = 0; i < fd_list.size(); ++i) {
+      if (fd_list[i].revents & POLLHUP) {
+        std::clog << "Hang-up detected on fd " << fd_list[i].fd << std::endl;
+        close(fd_list[i].fd);
+        fd_list.erase(fd_list.begin() + i);
+        --i;
+        continue;
+      }
       if (fd_list[i].revents & POLLIN) {
         if (fd_list[i].fd == listening_socket) {
           client_fd = accept(listening_socket, 0,0);
@@ -63,9 +70,31 @@ int main(void) {
 void build_response(std::vector<char>& request, std::string& response) {
 
   std::string request_file(request.begin() + 5, std::find(request.begin() + 5, request.end(), ' '));
-  std::ifstream	infile(request_file);
+  struct stat stats;
+  stat(request_file.c_str(), &stats);
 
-  if (infile.is_open()) {
+  if (!S_ISREG(stats.st_mode)) {
+    std::ifstream infile("404.html");
+    response = std::string((std::istreambuf_iterator<char>(infile)), std::istreambuf_iterator<char>());
+    response = "HTTP/1.1 404 Not Found\r\n"
+               "Content-Type: text/html\r\n"
+                "Content-Length: " + std::to_string(response.size()) + "\r\n"
+               "\r\n"
+              + response;
+    infile.close();
+  }
+  else if (access(request_file.c_str(), F_OK) == -1) {
+    std::ifstream infile("403.html");
+    response = std::string((std::istreambuf_iterator<char>(infile)), std::istreambuf_iterator<char>());
+    response = "HTTP/1.1 403 Forbidden\r\n"
+               "Content-Type: text/html\r\n"
+                "Content-Length: " + std::to_string(response.size()) + "\r\n"
+               "\r\n"
+              + response;
+    infile.close();
+  }
+  else {
+    std::ifstream	infile(request_file);
     response = std::string((std::istreambuf_iterator<char>(infile)), std::istreambuf_iterator<char>());
     response =  "HTTP/1.1 200 OK\r\n"
                 "Content-Type: text/html\r\n"
@@ -73,13 +102,6 @@ void build_response(std::vector<char>& request, std::string& response) {
                "\r\n"
                + response;
     infile.close();
-  }
-  else {
-    response = "HTTP/1.1 404 Not Found\r\n"
-               "Content-Type: text/plain\r\n"
-               "Content-Length: 13\r\n"
-               "\r\n"
-               "404 Not Found";
   }
 }
 

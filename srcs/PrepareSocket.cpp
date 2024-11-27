@@ -10,6 +10,9 @@ int prepareSocket(int &listening_socket, sockaddr_in &addr) {
   addr.sin_port = htons(PORT);
   addr.sin_addr.s_addr = INADDR_ANY;
 
+  int option = 1;
+  setsockopt(listening_socket, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
+
   if (bind(listening_socket, (sockaddr *)&addr, sizeof(addr)) == -1)
     return (1);
 

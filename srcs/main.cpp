@@ -7,6 +7,7 @@
 #include <string.h>
 #include <netinet/in.h>
 #include <iostream>
+#include <fstream>
 
 enum port {
   PORT = 8080
@@ -54,14 +55,15 @@ int main(void) {
     //TODO: replace with cpp function
     *strchr(file, ' ') = 0;
 
-    int file_fd = open(file, O_RDONLY);
-    if (file_fd == -1)
-      return (1);
+    std::ifstream	infile;
+    infile.open(file);
 
     //TODO: add http headers
-    sendfile(client_fd, file_fd, 0, 256);
+    std::string buf((std::istreambuf_iterator<char>(infile)), std::istreambuf_iterator<char>());
+    send(client_fd, buf.c_str(), buf.length(), MSG_DONTWAIT);
 
-    close(file_fd);
+
+    infile.close();
 
     //TODO: potentially keep client FD open
     close(client_fd);

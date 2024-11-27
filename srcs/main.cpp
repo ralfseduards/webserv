@@ -33,29 +33,37 @@ int main(void) {
     if (listen(sock, 10) == -1)
       return (1);
 
-    int client_fd = accept(sock, 0,0);
-
-    if (client_fd == -1)
-      return (1);
-
     //TODO: dynamically allocate buffer size
     char buffer[256] = {0};
 
+    //TODO: put client FDs into a list to store
+    int client_fd = accept(sock, 0,0);
+    if (client_fd == -1)
+      return (1);
+
+    //TODO: use poll on the FD list
+
+
+    //TODO: actually parse the requests
     ssize_t  message_length = recv(client_fd, buffer, 256, 0);
     if (message_length == -1)
       return (1);
 
     char* file = buffer + 5; // Skip the GET / part of the request
 
+    //TODO: replace with cpp function
     *strchr(file, ' ') = 0;
 
     int file_fd = open(file, O_RDONLY);
     if (file_fd == -1)
       return (1);
 
+    //TODO: add http headers
     sendfile(client_fd, file_fd, 0, 256);
 
     close(file_fd);
+
+    //TODO: potentially keep client FD open
     close(client_fd);
   }
 

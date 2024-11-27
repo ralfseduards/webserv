@@ -16,10 +16,11 @@
 #include <cstring>
 #include <vector>
 #include <algorithm>
-
+#include <poll.h>
 
 enum port {
-  PORT = 8080
+  PORT = 8080,
+  MAX_CLIENTS = 100
 };
 
 int prepareSocket(int *sock, sockaddr_in *addr);

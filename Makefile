@@ -4,6 +4,7 @@ NAME = webserv.out
 MAKEFLAGS = --no-print-directory
 
 SRC =	srcs/main.cpp\
+			srcs/PrepareSocket.cpp\
 
 OBJ = $(SRC:.cpp=.o)
 

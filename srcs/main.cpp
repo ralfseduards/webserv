@@ -1,45 +1,20 @@
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/sendfile.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <string.h>
-#include <poll.h>
-#include <netinet/in.h>
-#include <iostream>
-#include <fstream>
-#include <string>
+#include "../includes/webserv.hpp"
 
-enum port {
-  PORT = 8080
-};
 
 int main(void) {
 
   int sock;
   int client_fd;
-
-  sock = socket(AF_INET, SOCK_STREAM, 0);
-  if (sock == -1)
-    return (1);
-
   struct sockaddr_in addr;
-  addr.sin_family = AF_INET;
-  addr.sin_port = htons(PORT);
-  addr.sin_addr.s_addr = INADDR_ANY;
 
-
-  bind(sock, (struct sockaddr *)&addr, sizeof(addr));
-
+  prepareSocket(&sock, &addr);
 
   while (true) {
 
     if (listen(sock, 10) < 0)
       return (1);
 
-    //TODO: dynamically allocate buffer size
-    char request[256] = {0};
+    std::vector<char> request(8192);
 
     //TODO: put client FDs into a list to store
     client_fd = accept(sock, 0,0);
@@ -48,19 +23,18 @@ int main(void) {
 
     //TODO: use poll on the FD list
 
-
     //TODO: actually parse the requests
-    ssize_t message_length = recv(client_fd, request, 256, 0);
+    ssize_t message_length = recv(client_fd, request.data(), request.size(), 0);
     if (message_length == -1)
       return (1);
+    if (message_length < static_cast<ssize_t>(request.size()))
+      request.shrink_to_fit();
 
-    char* file = request + 5; // Skip the GET / part of the request
 
-    //TODO: replace with cpp function
-    *strchr(file, ' ') = 0;
+    std::string request_file(request.begin() + 5, std::find(request.begin() + 5, request.end(), ' '));
 
     std::ifstream	infile;
-    infile.open(file);
+    infile.open(request_file);
 
     std::string response((std::istreambuf_iterator<char>(infile)), std::istreambuf_iterator<char>());
 

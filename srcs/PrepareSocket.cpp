@@ -1,6 +1,6 @@
 #include "../includes/webserv.hpp"
 
-int prepareSocket(int &listening_socket, sockaddr_in &addr) {
+int prepareSocket(int &listening_socket, sockaddr_in &addr, std::vector<pollfd>& fd_vec) {
 
   listening_socket = socket(AF_INET, SOCK_STREAM, 0);
   if (listening_socket == -1)
@@ -18,6 +18,12 @@ int prepareSocket(int &listening_socket, sockaddr_in &addr) {
 
   if (listen(listening_socket, MAX_CLIENTS) < 0)
     return (1);
+
+  pollfd server_fd;
+  server_fd.fd = listening_socket;
+  server_fd.events = POLLIN;
+  server_fd.revents = 0;
+  fd_vec.push_back(server_fd);
 
   return (0);
 }

@@ -1,5 +1,4 @@
-#ifndef SERVER_HPP_
-#define SERVER_HPP_
+#pragma once
 
 #include "webserv.hpp"
 
@@ -15,7 +14,3 @@ public:
   std::vector<pollfd> fd_vec;
 
 };
-
-
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef RESPONSE_HPP_
-#define RESPONSE_HPP_
+#pragma once
 
 class Response
 {
@@ -18,8 +17,3 @@ Response::Response(/* args */)
 Response::~Response()
 {
 }
-
-
-
-
-#endif

@@ -1,5 +1,5 @@
 #include "../includes/webserv.hpp"
-#include "../includes/Request.hpp"
+#include "../includes/Client.hpp"
 
 int g_sig = 0;
 
@@ -15,6 +15,7 @@ int main(void) {
   int listening_socket;
   struct sockaddr_in addr;
   std::vector<pollfd> fd_vec;
+  std::map<int, Client> client_map;
   signal(SIGINT, signal_handler);
   prepareSocket(listening_socket, addr, fd_vec);
 
@@ -34,9 +35,14 @@ int main(void) {
           if (client_fd < 0)
             continue;
           add_client(client_fd, fd_vec);
+          add_client_map(client_map, client_fd);
         }
-        else
-          process_request(fd_vec, i);
+        else {
+          int status = receive_request(fd_vec[i], client_map[fd_vec[i].fd]);
+          if (status != 0)
+            request_error(fd_vec, client_map, i, status);
+          process_request(client_map[fd_vec[i].fd]);
+        }
       }
     }
   }
@@ -45,32 +51,42 @@ int main(void) {
   }
 }
 
-void request_error(std::vector<pollfd>& fd_vec, size_t& i, ssize_t& message_length) {
-    if (message_length == 0)
-      std::clog << "Client disconnected" << std::endl;
-    else
-      std::cerr << "Recv failed" << std::endl;
-    close(fd_vec[i].fd);
-    fd_vec.erase(fd_vec.begin() + i);
-    --i;
-  }
+void add_client_map( std::map<int, Client>& client_map, int fd) {
+  Client new_client;
 
-void process_request(std::vector<pollfd>& fd_vec, size_t& i) {
-  Request request;
-
-  request.message_length = recv(fd_vec[i].fd, request.raw_string.data(), request.raw_string.size(), 0);
-  if (request.message_length <= 0) {
-    request_error(fd_vec, i, request.message_length);
-    request.raw_string.clear();
-  } else {
-    //TODO: actually parse the request
-    std::string response;
-    build_response(request.raw_string, response);
-    send(fd_vec[i].fd, response.c_str(), response.length(), 0);
-  }
+  new_client.fd = fd;
+  client_map.emplace(fd, new_client);
+  return ;
 }
 
-void build_response(std::vector<char>& request, std::string& response) {
+void request_error(std::vector<pollfd>& fd_vec,  std::map<int, Client>& client_map, size_t& i, int status) {
+    if (status == DISCONNECTED)
+      std::clog << "Client " << i << " disconnected" << std::endl;
+    else
+      std::cerr << "Client " << i << " Recv failed" << std::endl;
+    close(fd_vec[i].fd);
+    client_map.erase(fd_vec[i].fd);
+    fd_vec.erase(fd_vec.begin() + i);
+    --i;
+}
+
+
+
+void process_request(Client& client) {
+
+  std::string response;
+  build_response(client.waitlist[0].start_line, response);
+  send(client.fd, response.c_str(), response.length(), 0);
+
+
+
+    //TODO: actually parse the request
+
+}
+
+
+
+void build_response(std::string& request, std::string& response) {
 
   std::string request_file(request.begin() + 5, std::find(request.begin() + 5, request.end(), ' '));
   struct stat stats;

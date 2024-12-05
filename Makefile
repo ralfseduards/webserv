@@ -5,7 +5,7 @@ MAKEFLAGS = --no-print-directory
 
 SRC =	srcs/main.cpp\
 			srcs/PrepareSocket.cpp\
-			srcs/Request.cpp
+			srcs/RequestParser.cpp
 
 OBJ = $(SRC:.cpp=.o)
 

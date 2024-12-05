@@ -1,29 +1,13 @@
-#ifndef REQUEST_HPP_
-#define REQUEST_HPP_
+#pragma once
 
 #include "webserv.hpp"
 
-class Request
-{
-private:
+struct Request {
 
-public:
 
-  Request(/* args */);
-  ~Request();
-
-  std::vector<char> raw_string;
-
-  ssize_t type;
-  ssize_t message_length;
-  std::string path;
-  std::string host;
-  std::string user_agent;
-  std::string connection;
-  std::string accept;
+  std::string start_line;
+  std::map<std::string, std::string> header_map;
 
 };
 
 
-
-#endif

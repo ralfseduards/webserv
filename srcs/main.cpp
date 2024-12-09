@@ -73,45 +73,14 @@ void request_error(std::vector<pollfd>& fd_vec,  std::map<int, Client>& client_m
 
 
 void process_request(Client& client) {
-
   std::string response;
+
   build_response(client.waitlist[0].start_line, response);
   send(client.fd, response.c_str(), response.length(), 0);
-
-
-
+  client.waitlist.erase(client.waitlist.begin());
+  client.request.clear();
     //TODO: actually parse the request
 
-}
-
-
-
-void build_response(std::string& request, std::string& response) {
-
-  std::string request_file(request.begin() + 5, std::find(request.begin() + 5, request.end(), ' '));
-  struct stat stats;
-  stat(request_file.c_str(), &stats);
-
-  if (!S_ISREG(stats.st_mode) || access(request_file.c_str(), F_OK) == -1 ) {
-    std::ifstream infile("404.html");
-    response = std::string((std::istreambuf_iterator<char>(infile)), std::istreambuf_iterator<char>());
-    response = "HTTP/1.1 404 Not Found\r\n"
-               "Content-Type: text/html\r\n"
-                "Content-Length: " + std::to_string(response.size()) + "\r\n"
-               "\r\n"
-              + response;
-    infile.close();
-  }
-  else {
-    std::ifstream	infile(request_file);
-    response = std::string((std::istreambuf_iterator<char>(infile)), std::istreambuf_iterator<char>());
-    response =  "HTTP/1.1 200 OK\r\n"
-                "Content-Type: text/html\r\n"
-               "Content-Length: " + std::to_string(response.size()) + "\r\n"
-               "\r\n"
-               + response;
-    infile.close();
-  }
 }
 
 void add_client(int client_fd, std::vector<pollfd>& fd_vec) {

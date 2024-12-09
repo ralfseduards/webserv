@@ -25,21 +25,18 @@ int receive_request(pollfd& client_socket, Client& client) {
 
   if (header_length != std::string::npos) {
     Request new_request;
-    client.waitlist.push_back(new_request);
     int status = parse_header(client.request.substr(0, client.request.find("\r\n\r\n")), new_request);
-    client.request.erase(client.request.begin() + header_length + 5);
+    if (client.request.length() > header_length + 5)
+      client.request.erase(client.request.begin() + header_length + 5);
+    client.waitlist.push_back(new_request);
     if (status != 0)
       return (status);
   }
 
   if (client.request.size() >= MAX_REQUEST_SIZE)
     return (HEADER_INVAL_SIZE);
-
   return (0);
 }
-
-
-
 
 bool validate_header_key(std::string& key) {
   const std::regex key_regex("^[!#$%&'*+.^_`|~0-9a-zA-Z-]+$");
@@ -52,13 +49,13 @@ bool validate_header_value(std::string& value) {
 }
 
 
+
 int parse_header(std::string header, Request& new_request) {
 
   std::istringstream stream(header);
   std::string line;
 
   std::getline(stream, new_request.start_line);
-
   while (std::getline(stream, line)) {
 
     if (!line.empty() && *(line.end() - 1) == '\r')

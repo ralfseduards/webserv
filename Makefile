@@ -1,11 +1,12 @@
 CXX = c++
-CXXFLAGS = -Wall -Wextra -Werror -g3
+CXXFLAGS = -Wall -Wextra -Werror -g3 -fsanitize=address
 NAME = webserv.out
 MAKEFLAGS = --no-print-directory
 
 SRC =	srcs/main.cpp\
 			srcs/PrepareSocket.cpp\
-			srcs/RequestParser.cpp
+			srcs/RequestParser.cpp\
+			srcs/BuildResponse.cpp
 
 OBJ = $(SRC:.cpp=.o)
 

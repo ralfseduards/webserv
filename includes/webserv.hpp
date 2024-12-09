@@ -27,13 +27,14 @@
 
 
 enum client_status {
-  OK = 0,
-  DISCONNECTED = 1,
-  ERROR = 2,
-  HEADER_INVAL_COLON = 3,
-  HEADER_INVAL_REGEX_KEY = 4,
-  HEADER_INVAL_REGEX_VAL = 5,
-  HEADER_INVAL_SIZE = 6,
+  OK,
+  DISCONNECTED,
+  ERROR,
+  RECEIVING,
+  HEADER_INVAL_COLON,
+  HEADER_INVAL_REGEX_KEY,
+  HEADER_INVAL_REGEX_VAL,
+  HEADER_INVAL_SIZE,
 };
 
 
@@ -50,12 +51,17 @@ enum messages {
   DELETE = 2
 };
 
-int prepareSocket(int &listening_socket, sockaddr_in &addr, std::vector<pollfd>& fd_vec);
-void add_client(int client_fd, std::vector<pollfd>& fd_vec);
-void build_response(std::string& request, std::string& response);
 void signal_handler(int sig);
-void process_request(Client& client);
+int prepareSocket(int &listening_socket, sockaddr_in &addr, std::vector<pollfd>& fd_vec);
+
+void client_add(int client_fd, std::vector<pollfd>& fd_vec);
+void client_add_map( std::map<int, Client>& client_map, int fd);
+void client_invalid(std::vector<pollfd>& fd_vec, size_t& i);
+
 int receive_request(pollfd& client_socket, Client& client);
+void process_request(Client& client);
 void request_error(std::vector<pollfd>& fd_vec,  std::map<int, Client>& client_map, size_t& i, int status);
-void add_client_map( std::map<int, Client>& client_map, int fd);
-int parse_header(std::string header, Request& new_request);
+int read_header(std::string header, Request& new_request);
+
+void get_response(std::string& request, std::string& response);
+void post_response(Client& client);

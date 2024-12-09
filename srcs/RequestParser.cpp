@@ -8,34 +8,83 @@ int receive_request(pollfd& client_socket, Client& client) {
   ssize_t message_size;
   size_t header_length;
 
+  //Create a buffer and set it to 0
   char request_buffer[BUFFER_SIZE + 1];
-
   memset(request_buffer, 0, BUFFER_SIZE + 1);
 
+  //Read from the socket buffer in request buffer
   message_size = recv(client_socket.fd, request_buffer, BUFFER_SIZE, 0);
 
   if (message_size == 0)
-    return (DISCONNECTED);
-  if (message_size < 0)
-    return (ERROR);
+    std::clog << '0' << std::endl;
+  else
+    std::clog << request_buffer << std::endl;
 
+  //recv error handling
+  //TODO: Clean up
+  if (message_size == 0) {
+    client.status = DISCONNECTED;
+    return (DISCONNECTED);
+  }
+  if (message_size < 0) {
+    client.status = ERROR;
+    return (ERROR);
+  }
+
+  //Add the request buffer into a string
   client.request.append(request_buffer);
 
-  header_length = client.request.find("\r\n\r\n");
+  //If the Client is currently receiving from previous POST, jump there
+  if (client.status == RECEIVING) {
+    post_response(client);
+  }
 
+  //Check if a full Header is present, and if so push a new request into the queue
+  header_length = client.request.find("\r\n\r\n");
   if (header_length != std::string::npos) {
     Request new_request;
-    int status = parse_header(client.request.substr(0, client.request.find("\r\n\r\n")), new_request);
+    int status = read_header(client.request.substr(0, client.request.find("\r\n\r\n")), new_request);
+    if (status != 0)
+      return (status);
     if (client.request.length() > header_length + 5)
       client.request.erase(client.request.begin() + header_length + 5);
     client.waitlist.push_back(new_request);
-    if (status != 0)
-      return (status);
+  }
+  // If we got here there ws no header present and the client is not actively
+  // receiving. If the header becomes too big return error
+  // if (client.request.size() >= MAX_REQUEST_SIZE)
+  //   return (HEADER_INVAL_SIZE);
+
+  return (0);
+}
+
+void process_request(Client& client) {
+
+  //Search the first line for the type of request
+  size_t prefix_len = client.waitlist[0].start_line.find(' ');
+  //TODO: error handling
+  if (prefix_len == std::string::npos)
+    return ;
+  client.waitlist[0].type = client.waitlist[0].start_line.substr(0, prefix_len);
+
+  //Select type of response
+  if (client.waitlist[0].type == "GET")
+    get_response(client.waitlist[0].start_line, client.waitlist[0].response);
+  else if (client.waitlist[0].type == "POST") {
+    client.waitlist[0].content_length = std::stoi(client.waitlist[0].header_map["Content-Length"]);
+    post_response(client);
+  } else if (client.waitlist[0].type == "DELETE")
+    ;
+  else {
+    //TODO: Error handling
+    std::cout << "Invalid Request" << std::endl;
+    return ;
   }
 
-  if (client.request.size() >= MAX_REQUEST_SIZE)
-    return (HEADER_INVAL_SIZE);
-  return (0);
+  //send the response and delete all temp data
+  send(client.fd, client.waitlist[0].response.c_str(), client.waitlist[0].response.length(), 0);
+  client.waitlist.erase(client.waitlist.begin());
+  client.request.clear();
 }
 
 bool validate_header_key(std::string& key) {
@@ -48,9 +97,7 @@ bool validate_header_value(std::string& value) {
   return (std::regex_match(value, value_regex));
 }
 
-
-
-int parse_header(std::string header, Request& new_request) {
+int read_header(std::string header, Request& new_request) {
 
   std::istringstream stream(header);
   std::string line;

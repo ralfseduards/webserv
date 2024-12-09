@@ -1,6 +1,6 @@
 #include "../includes/webserv.hpp"
 
-void build_response(std::string& request, std::string& response) {
+void get_response(std::string& request, std::string& response) {
 
   std::string request_file(request.begin() + 5, std::find(request.begin() + 5, request.end(), ' '));
   struct stat stats;
@@ -10,7 +10,7 @@ void build_response(std::string& request, std::string& response) {
     response = std::string((std::istreambuf_iterator<char>(infile)), std::istreambuf_iterator<char>());
     response = "HTTP/1.1 404 Not Found\r\n"
                "Content-Type: text/html\r\n"
-                "Content-Length: " + std::to_string(response.size()) + "\r\n"
+               "Content-Length: " + std::to_string(response.size()) + "\r\n"
                "\r\n"
               + response;
     infile.close();
@@ -18,8 +18,8 @@ void build_response(std::string& request, std::string& response) {
   else {
     std::ifstream	infile(request_file);
     response = std::string((std::istreambuf_iterator<char>(infile)), std::istreambuf_iterator<char>());
-    response =  "HTTP/1.1 200 OK\r\n"
-                "Content-Type: text/html\r\n"
+    response = "HTTP/1.1 200 OK\r\n"
+               "Content-Type: text/html\r\n"
                "Content-Length: " + std::to_string(response.size()) + "\r\n"
                "\r\n"
                + response;

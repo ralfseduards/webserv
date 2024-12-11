@@ -3,5 +3,14 @@
         <h1>Hello, World!</h1>
         <a href="/www/01-pages/message.html">other site</a>
         <a href="/www/01-pages/403_test.html">Testing forbidden</a>
-    </body>
+    <form action="/upload" method="POST" enctype="multipart/form-data">
+        <!-- File input field -->
+        <label for="file">Choose a file:</label>
+        <input type="file" id="file" name="file" required>
+        <br><br>
+        <!-- Submit button -->
+        <button type="submit">Upload File</button>
+    </form>
+        </form>
+      </body>
 </html>

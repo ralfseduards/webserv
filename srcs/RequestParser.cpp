@@ -27,8 +27,6 @@ int receive_request(pollfd& client_socket, Client& client) {
   else
     std::clog << request_buffer << std::endl;
 
-  //recv error handling
-
   //Add the request buffer into a string
   client.request.append(request_buffer);
 
@@ -42,16 +40,15 @@ int receive_request(pollfd& client_socket, Client& client) {
   if (header_length != std::string::npos) {
     Request new_request;
     client.status = read_header(client.request.substr(0, client.request.find("\r\n\r\n")), new_request);
-    if (client.status != 0)
+    if (client.status != OK && client.status != RECEIVING)
       return (client.status);
-    if (client.request.length() > header_length + 5)
-      client.request.erase(client.request.begin() + header_length + 5);
+    client.request.erase(0, client.request.find("\r\n\r\n") + 4);
     client.waitlist.push_back(new_request);
   }
   // If we got here there ws no header present and the client is not actively
   // receiving. If the header becomes too big return error
-  // if (client.request.size() >= MAX_REQUEST_SIZE)
-  //   return (HEADER_INVAL_SIZE);
+  if (client.request.size() >= MAX_REQUEST_SIZE)
+    return (HEADER_INVAL_SIZE);
 
   return (0);
 }
@@ -87,7 +84,6 @@ void process_request(Client& client) {
   //send the response and delete all temp data
   send(client.fd, client.waitlist[0].response.c_str(), client.waitlist[0].response.length(), 0);
   client.waitlist.erase(client.waitlist.begin());
-  client.request.clear();
 }
 
 bool validate_header_key(std::string& key) {
@@ -125,11 +121,14 @@ int read_header(std::string header, Request& new_request) {
 
     value = (start == std::string::npos || end == std::string::npos) ? "" : value.substr(start, end - start + 1);
 
+    new_request.header_map.emplace(key, value);
+
     if (validate_header_key(key) == false)
       return (HEADER_INVAL_REGEX_KEY);
 
     if (validate_header_key(key) == false)
       return (HEADER_INVAL_REGEX_VAL);
   }
+  //TODO: MULTIPART CHECK
   return (0);
 }

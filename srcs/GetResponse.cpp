@@ -1,4 +1,5 @@
 #include "../includes/webserv.hpp"
+#include "../includes/CharArrays.hpp"
 
 void get_response(std::string& request, std::string& response) {
 
@@ -8,11 +9,8 @@ void get_response(std::string& request, std::string& response) {
   if (S_ISDIR(stats.st_mode) || access(request_file.c_str(), R_OK) == -1) {
     std::ifstream infile("404.html");
     response = std::string((std::istreambuf_iterator<char>(infile)), std::istreambuf_iterator<char>());
-    response = "HTTP/1.1 404 Not Found\r\n"
-               "Content-Type: text/html\r\n"
-               "Content-Length: " + std::to_string(response.size()) + "\r\n"
-               "\r\n"
-              + response;
+    //TODO: remove toString
+    response = NotFound + std::to_string(response.size()) + "\r\n\r\n" + response;
     infile.close();
   }
   else {
@@ -20,8 +18,7 @@ void get_response(std::string& request, std::string& response) {
     response = std::string((std::istreambuf_iterator<char>(infile)), std::istreambuf_iterator<char>());
     response = "HTTP/1.1 200 OK\r\n"
                "Content-Type: text/html\r\n"
-               "Content-Length: " + std::to_string(response.size()) + "\r\n"
-               "\r\n"
+               "Content-Length: " + std::to_string(response.size()) + "\r\n\r\n"
                + response;
     infile.close();
   }

@@ -15,21 +15,19 @@ int receive_request(pollfd& client_socket, Client& client) {
   //Read from the socket buffer in request buffer
   message_size = recv(client_socket.fd, request_buffer, BUFFER_SIZE, 0);
 
-  if (message_size == 0)
+  if (message_size == 0) {
     std::clog << '0' << std::endl;
+    client.status = DISCONNECTED;
+    return (DISCONNECTED);
+  }
+  else if (message_size < 0) {
+    client.status = ERROR;
+    return (ERROR);
+  }
   else
     std::clog << request_buffer << std::endl;
 
   //recv error handling
-  //TODO: Clean up
-  if (message_size == 0) {
-    client.status = DISCONNECTED;
-    return (DISCONNECTED);
-  }
-  if (message_size < 0) {
-    client.status = ERROR;
-    return (ERROR);
-  }
 
   //Add the request buffer into a string
   client.request.append(request_buffer);
@@ -43,9 +41,9 @@ int receive_request(pollfd& client_socket, Client& client) {
   header_length = client.request.find("\r\n\r\n");
   if (header_length != std::string::npos) {
     Request new_request;
-    int status = read_header(client.request.substr(0, client.request.find("\r\n\r\n")), new_request);
-    if (status != 0)
-      return (status);
+    client.status = read_header(client.request.substr(0, client.request.find("\r\n\r\n")), new_request);
+    if (client.status != 0)
+      return (client.status);
     if (client.request.length() > header_length + 5)
       client.request.erase(client.request.begin() + header_length + 5);
     client.waitlist.push_back(new_request);
@@ -71,12 +69,17 @@ void process_request(Client& client) {
   if (client.waitlist[0].type == "GET")
     get_response(client.waitlist[0].start_line, client.waitlist[0].response);
   else if (client.waitlist[0].type == "POST") {
+    //TODO: remove stoi
     client.waitlist[0].content_length = std::stoi(client.waitlist[0].header_map["Content-Length"]);
     post_response(client);
-  } else if (client.waitlist[0].type == "DELETE")
+  } else if (client.waitlist[0].type == "DELETE") {
     ;
+  } else if (client.waitlist[0].type == "HEAD") {
+    ;
+  }
   else {
     //TODO: Error handling
+    //TODO: send error 501
     std::cout << "Invalid Request" << std::endl;
     return ;
   }

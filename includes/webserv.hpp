@@ -28,9 +28,10 @@
 
 enum client_status {
   OK,
-  DISCONNECTED,
-  ERROR,
   RECEIVING,
+  DISCONNECTED,
+  HUNGUP,
+  ERROR,
   HEADER_INVAL_COLON,
   HEADER_INVAL_REGEX_KEY,
   HEADER_INVAL_REGEX_VAL,
@@ -52,15 +53,15 @@ enum messages {
 };
 
 void signal_handler(int sig);
-int prepareSocket(int &listening_socket, sockaddr_in &addr, std::vector<pollfd>& fd_vec);
+int prepareSocket(int &listening_socket, std::vector<pollfd>& fd_vec);
 
-void client_add(int client_fd, std::vector<pollfd>& fd_vec);
+void client_add_vec(int client_fd, std::vector<pollfd>& fd_vec);
 void client_add_map( std::map<int, Client>& client_map, int fd);
-void client_invalid(std::vector<pollfd>& fd_vec, size_t& i);
+void client_error(size_t i, int fd, int status);
+void client_remove(size_t& i, std::map<int, Client>& client_map, std::vector<pollfd>& fd_vec);
 
 int receive_request(pollfd& client_socket, Client& client);
 void process_request(Client& client);
-void request_error(std::vector<pollfd>& fd_vec,  std::map<int, Client>& client_map, size_t& i, int status);
 int read_header(std::string header, Request& new_request);
 
 void get_response(std::string& request, std::string& response);

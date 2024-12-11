@@ -1,6 +1,8 @@
 #include "../includes/webserv.hpp"
 
-int prepareSocket(int &listening_socket, sockaddr_in &addr, std::vector<pollfd>& fd_vec) {
+int prepareSocket(int &listening_socket, std::vector<pollfd>& fd_vec) {
+
+  struct sockaddr_in addr;
 
   listening_socket = socket(AF_INET, SOCK_STREAM, 0);
   if (listening_socket == -1)

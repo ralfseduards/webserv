@@ -1,6 +1,55 @@
 #include "../includes/webserv.hpp"
 
-void client_add(int client_fd, std::vector<pollfd>& fd_vec) {
+void client_error(size_t i, int fd, int status) {
+
+  switch (status)
+  {
+  case DISCONNECTED:
+    std::clog << "Client " << i << " on fd" << fd << " Disconnected" << std::endl;
+    close(fd);
+    break;
+
+  case ERROR:
+    std::clog << "Client " << i << " on fd" << fd << " Recv Error" << std::endl;
+    close(fd);
+    break;
+
+  //TODO: send error 400
+  case HEADER_INVAL_COLON:
+    std::clog << "Client " << i << " on fd" << fd << " Malformed Header" << std::endl;
+    break;
+
+  case HEADER_INVAL_REGEX_KEY:
+    std::clog << "Client " << i << " on fd" << fd << " Malformed Header" << std::endl;
+    break;
+
+  case HEADER_INVAL_REGEX_VAL:
+    std::clog << "Client " << i << " on fd" << fd << " Malformed Header" << std::endl;
+    break;
+
+  case HEADER_INVAL_SIZE:
+    std::clog << "Client " << i << " on fd" << fd << " Malformed Header" << std::endl;
+    break;
+
+  default:
+    std::cerr << "Unknown Error status on " << i << "with fd " << fd << "\nError: " << status << std::endl;
+    break;
+  }
+}
+
+
+//Removes the Client from the Map and vector does NOT close any connections
+void client_remove(size_t& i, std::map<int, Client>& client_map, std::vector<pollfd>& fd_vec) {
+  std::clog << "Removing Client " << i << " with fd " << fd_vec[i].fd << std::endl;
+  client_map.erase(fd_vec[i].fd);
+  fd_vec.erase(fd_vec.begin() + i);
+  --i;
+  std::clog << "Client removed" << std::endl;
+  return ;
+}
+
+
+void client_add_vec(int client_fd, std::vector<pollfd>& fd_vec) {
   pollfd client_poll_fd;
   client_poll_fd.fd = client_fd;
   client_poll_fd.events = POLLIN;
@@ -9,20 +58,13 @@ void client_add(int client_fd, std::vector<pollfd>& fd_vec) {
   std::clog << "New Client added: " << fd_vec.size() << " on fd " << client_fd << "\n";
 }
 
-void client_add_map( std::map<int, Client>& client_map, int fd) {
+void client_add_map(std::map<int, Client>& client_map, int fd) {
   Client new_client;
 
   new_client.fd = fd;
   new_client.status = OK;
   client_map.emplace(fd, new_client);
   return ;
-}
-
-void client_invalid(std::vector<pollfd>& fd_vec, size_t& i) {
-  std::clog << "Client " << i << " invalid on fd " << fd_vec[i].fd << std::endl;
-  close(fd_vec[i].fd);
-  fd_vec.erase(fd_vec.begin() + i);
-  --i;
 }
 
 // void client_hung_up(std::vector<pollfd>& fd_vec, size_t& i) {

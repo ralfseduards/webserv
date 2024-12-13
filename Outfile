@@ -2,7 +2,7 @@
 Content-Type: application/octet-stream
 
 CXX = c++
-CXXFLAGS = -Wall -Wextra -Werror -g3 -fsanitize=address
+CXXFLAGS = -Wall -Wextra -Werror -g3
 NAME = webserv.out
 MAKEFLAGS = --no-print-directory
 
@@ -33,5 +33,5 @@ re: fclean all
 
 .PHONY: clean fclean re all
 
------------------------------349430130910717459883196070522--
+-----------------------------3924212497529440801825417189--
 

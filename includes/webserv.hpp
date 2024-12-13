@@ -63,6 +63,9 @@ void client_remove(size_t& i, std::map<int, Client>& client_map, std::vector<pol
 int receive_request(pollfd& client_socket, Client& client);
 void process_request(Client& client);
 int read_header(std::string header, Request& new_request);
+bool validate_header_key(std::string& key);
+bool validate_header_value(std::string& value);
 
 void get_response(std::string& request, std::string& response);
 void post_response(Client& client);
+int post_request_header_parser(Client& client);

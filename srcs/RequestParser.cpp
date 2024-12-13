@@ -67,6 +67,7 @@ void process_request(Client& client) {
     get_response(client.waitlist[0].start_line, client.waitlist[0].response);
   else if (client.waitlist[0].type == "POST") {
     //TODO: remove stoi
+    // TODO: replace [] map indexing to prevent emplacing new values
     client.waitlist[0].content_length = std::stoi(client.waitlist[0].header_map["Content-Length"]);
     post_response(client);
   } else if (client.waitlist[0].type == "DELETE") {
@@ -86,16 +87,6 @@ void process_request(Client& client) {
   client.waitlist.erase(client.waitlist.begin());
 }
 
-bool validate_header_key(std::string& key) {
-  const std::regex key_regex("^[!#$%&'*+.^_`|~0-9a-zA-Z-]+$");
-  return (std::regex_match(key, key_regex));
-}
-
-bool validate_header_value(std::string& value) {
-  const std::regex value_regex("^[\\t\\x20-\\x7E]*$");
-  return (std::regex_match(value, value_regex));
-}
-
 int read_header(std::string header, Request& new_request) {
 
   std::istringstream stream(header);
@@ -104,11 +95,14 @@ int read_header(std::string header, Request& new_request) {
   std::getline(stream, new_request.start_line);
   while (std::getline(stream, line)) {
 
+    //Since readline does not include the newline character, pop the remaining
+    //Carriage return, then replace any loose carriage returns that may be
+    //included in error.
     if (!line.empty() && *(line.end() - 1) == '\r')
       line.pop_back();
-
     std::replace(line.begin(), line.end(), '\r', ' ');
 
+    //Find the mandatory colon that seperates key from content
     size_t colon = line.find(':');
     if (colon == std::string::npos)
       return (HEADER_INVAL_COLON);
@@ -121,14 +115,23 @@ int read_header(std::string header, Request& new_request) {
 
     value = (start == std::string::npos || end == std::string::npos) ? "" : value.substr(start, end - start + 1);
 
+    //Put the "key" and "value" into the hader map. The key does NOT have the colon
     new_request.header_map.emplace(key, value);
 
     if (validate_header_key(key) == false)
       return (HEADER_INVAL_REGEX_KEY);
-
     if (validate_header_key(key) == false)
       return (HEADER_INVAL_REGEX_VAL);
   }
-  //TODO: MULTIPART CHECK
   return (0);
+}
+
+bool validate_header_key(std::string& key) {
+  const std::regex key_regex("^[!#$%&'*+.^_`|~0-9a-zA-Z-]+$");
+  return (std::regex_match(key, key_regex));
+}
+
+bool validate_header_value(std::string& value) {
+  const std::regex value_regex("^[\\t\\x20-\\x7E]*$");
+  return (std::regex_match(value, value_regex));
 }

@@ -19,7 +19,7 @@ void post_response(Client& client) {
   // TODO: split multiparts into seperate streams on boundary
 
   // if (client.waitlist[0].header_map.find("boundary=") != client.waitlist[0].header_map.end()) {
-
+  //   post_request_part_handler(client.waitlist[0]);
   // }
 
   std::size_t filename_position = client.waitlist[0].body.find("filename=");
@@ -33,6 +33,40 @@ void post_response(Client& client) {
                "Content-Length: " + std::to_string(client.waitlist[0].content_length) + "\r\n\r\n";
   }
 }
+
+// int post_request_part_handler(Request& request) {
+
+//   std::size_t begin;
+//   std::size_t end;
+
+//   begin = request.body.find(request.header_map.at("boundary="));
+//   end = request.body.find(request.header_map.at("boundary="), begin + 1);
+
+// //While the end position isn't the final boundary
+// while (request.body.find(request.header_map.at("boundary=") + "--", end) != end)
+
+//   //safety check
+//   if (begin == std::string::npos || end == std::string::npos)
+//     return ;
+
+//   //move begin up to after the boundary
+//   begin += request.header_map.at("boundary=").length();
+
+//   //check if there is a newline after the delimiter
+//   if (request.body.find("\r\n\r\n", begin) == begin) {
+//     //TODO: Plain body
+//   }
+//   else {
+//     //Parse Part header
+//   }
+
+//   //move up to the next part
+//   begin = end;
+//   end = request.body.find(request.header_map.at("boundary="), begin + 1);
+
+// }
+
+
 
 int post_request_header_parser(Client& client) {
 

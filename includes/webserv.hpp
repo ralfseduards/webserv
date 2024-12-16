@@ -70,3 +70,4 @@ void get_response(std::string& request, std::string& response);
 void post_response(Client& client);
 int post_request_header_parser(Client& client);
 int post_request_part_handler(Request& request);
+int post_request_simple_handler(Request& request);

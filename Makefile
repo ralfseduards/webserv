@@ -1,5 +1,5 @@
 CXX = c++
-CXXFLAGS = -Wall -Wextra -Werror -g3
+CXXFLAGS = -Wall -Wextra -Werror
 NAME = webserv.out
 MAKEFLAGS = --no-print-directory
 

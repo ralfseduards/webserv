@@ -69,3 +69,4 @@ bool validate_header_value(std::string& value);
 void get_response(std::string& request, std::string& response);
 void post_response(Client& client);
 int post_request_header_parser(Client& client);
+int post_request_part_handler(Request& request);

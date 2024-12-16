@@ -18,15 +18,27 @@ void post_response(Client& client) {
 
   // TODO: split multiparts into seperate streams on boundary
 
-  // if (client.waitlist[0].header_map.find("boundary=") != client.waitlist[0].header_map.end()) {
-  //   post_request_part_handler(client.waitlist[0]);
-  // }
+  if (client.waitlist[0].header_map.find("boundary=") != client.waitlist[0].header_map.end()) {
+    post_request_part_handler(client.waitlist[0]);
+    return ;
+  }
+
 
   std::size_t filename_position = client.waitlist[0].body.find("filename=");
   if (filename_position != std::string::npos) {
-    std::ofstream outfile("Outfile");
-    outfile << client.waitlist[0].body.substr(filename_position + 9) << std::endl;
-    outfile.close();
+    try
+    {
+      std::string filename = client.waitlist[0].body.substr(filename_position + 1, client.waitlist[0].body.find('"', filename_position + 1));
+      std::cout << filename << std::endl;
+      std::ofstream outfile("www/02-received/Outfile");
+      outfile << client.waitlist[0].body.substr(filename_position + 9) << std::endl;
+      outfile.close();
+    }
+    catch(const std::exception& e)
+    {
+      std::cerr << e.what() << '\n';
+    }
+
     // TODO: replace [] map indexing to prevent emplacing new values
     client.waitlist[0].response = "HTTP/1.1 201 Created\r\n"
                "Content-Type: " + client.waitlist[0].header_map["Content-Type"] + "\r\n" +
@@ -34,39 +46,38 @@ void post_response(Client& client) {
   }
 }
 
-// int post_request_part_handler(Request& request) {
+int post_request_part_handler(Request& request) {
 
-//   std::size_t begin;
-//   std::size_t end;
+  std::size_t begin;
+  std::size_t end;
+  std::size_t filename_pos;
+  std::size_t filename_end;
+  std::size_t body_end;
+  std::string filename;
+  std::string subheader;
 
-//   begin = request.body.find(request.header_map.at("boundary="));
-//   end = request.body.find(request.header_map.at("boundary="), begin + 1);
+  begin = request.body.find(request.header_map.at("boundary=")) + request.header_map.at("boundary=").length();
+  end = request.body.find("\r\n\r\n", begin) - 1;
 
-// //While the end position isn't the final boundary
-// while (request.body.find(request.header_map.at("boundary=") + "--", end) != end)
+  subheader = request.body.substr(begin, end);
+  request.body.erase(request.body.begin(), request.body.begin() + end  + 5);
 
-//   //safety check
-//   if (begin == std::string::npos || end == std::string::npos)
-//     return ;
+  filename_pos = subheader.find("filename=") + 9;
+  filename_end = subheader.find('"', filename_pos + 1);
+  filename = subheader.substr(filename_pos, filename_end - filename_pos);
+  filename.erase(std::remove(filename.begin(), filename.end(), '"'), filename.end());
 
-//   //move begin up to after the boundary
-//   begin += request.header_map.at("boundary=").length();
+  body_end = request.body.find(request.header_map.at("boundary="));
 
-//   //check if there is a newline after the delimiter
-//   if (request.body.find("\r\n\r\n", begin) == begin) {
-//     //TODO: Plain body
-//   }
-//   else {
-//     //Parse Part header
-//   }
+  std::ofstream outfile("www/02-received/" + filename);
+  std::remove(request.body.begin(), request.body.begin() + body_end, '\r');
+  outfile << request.body.substr(0, body_end - 4);
+  outfile.close();
+  request.body.erase(request.body.begin(), request.body.begin() + body_end);
+  std::cout << request.body << std::endl;
 
-//   //move up to the next part
-//   begin = end;
-//   end = request.body.find(request.header_map.at("boundary="), begin + 1);
-
-// }
-
-
+  return (0);
+}
 
 int post_request_header_parser(Client& client) {
 

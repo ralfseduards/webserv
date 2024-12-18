@@ -32,6 +32,10 @@ int receive_request(pollfd& client_socket, Client& client) {
 
   //If the Client is currently receiving from previous POST, jump there
   if (client.status == RECEIVING) {
+      if (client.request.size() > MAX_REQUEST_SIZE) {
+        client.status = BODY_TOO_LARGE;
+        return (BODY_TOO_LARGE);
+      }
     post_response(client);
   }
 
@@ -53,39 +57,63 @@ int receive_request(pollfd& client_socket, Client& client) {
   return (0);
 }
 
-void process_request(Client& client) {
+void set_type(Client& client) {
 
-  //Search the first line for the type of request
   size_t prefix_len = client.waitlist[0].start_line.find(' ');
   //TODO: error handling
   if (prefix_len == std::string::npos)
     return ;
-  client.waitlist[0].type = client.waitlist[0].start_line.substr(0, prefix_len);
 
-  //Select type of response
-  if (client.waitlist[0].type == "GET")
+  std::string temp = client.waitlist[0].start_line.substr(0, prefix_len);
+  if (temp == "GET")
+    client.waitlist[0].type = GET;
+  else if (temp == "POST")
+    client.waitlist[0].type = POST;
+  else if (temp == "DELETE")
+    client.waitlist[0].type = DELETE;
+  else if (temp == "HEAD")
+    client.waitlist[0].type = HEAD;
+  else
+    client.waitlist[0].type = INVALID;
+}
+
+
+void process_request(Client& client) {
+
+  set_type(client);
+
+  switch (client.waitlist[0].type)
+  {
+  case GET:
     get_response(client.waitlist[0].start_line, client.waitlist[0].response);
-  else if (client.waitlist[0].type == "POST") {
+    break;
+
+  case POST:
     //TODO: remove stoi
-    // TODO: replace [] map indexing to prevent emplacing new values
+    //TODO: replace [] map indexing to prevent emplacing new values
     client.waitlist[0].content_length = std::stoi(client.waitlist[0].header_map["Content-Length"]);
     post_response(client);
-  } else if (client.waitlist[0].type == "DELETE") {
-    ;
-  } else if (client.waitlist[0].type == "HEAD") {
-    ;
-  }
-  else {
-    //TODO: Error handling
+    break;
+
+  case DELETE:
+    break;
+
+  case HEAD:
+    break;
+
+  default:
     //TODO: send error 501
     std::cout << "Invalid Request" << std::endl;
-    return ;
+    break;
   }
 
   //send the response and delete all temp data
   send(client.fd, client.waitlist[0].response.c_str(), client.waitlist[0].response.length(), 0);
   client.waitlist.erase(client.waitlist.begin());
 }
+
+// void build_response(Client& client) {
+// }
 
 int read_header(std::string header, Request& new_request) {
 
@@ -126,11 +154,13 @@ int read_header(std::string header, Request& new_request) {
   return (0);
 }
 
+//TODO: replace with 98 function
 bool validate_header_key(std::string& key) {
   const std::regex key_regex("^[!#$%&'*+.^_`|~0-9a-zA-Z-]+$");
   return (std::regex_match(key, key_regex));
 }
 
+//TODO: replace with 98 function
 bool validate_header_value(std::string& value) {
   const std::regex value_regex("^[\\t\\x20-\\x7E]*$");
   return (std::regex_match(value, value_regex));

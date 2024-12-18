@@ -7,19 +7,14 @@ void get_response(std::string& request, std::string& response) {
   struct stat stats;
   stat(request_file.c_str(), &stats);
   if (S_ISDIR(stats.st_mode) || access(request_file.c_str(), R_OK) == -1) {
-    std::ifstream infile("404.html");
-    response = std::string((std::istreambuf_iterator<char>(infile)), std::istreambuf_iterator<char>());
+    std::ifstream infile(pathNotFound);
     //TODO: remove toString
-    response = NotFound + std::to_string(response.size()) + "\r\n\r\n" + response;
-    infile.close();
+    response = std::string((std::istreambuf_iterator<char>(infile)), std::istreambuf_iterator<char>());
+    response = code404 + std::to_string(response.size()) + "\r\n\r\n" + response;
   }
   else {
     std::ifstream	infile(request_file);
     response = std::string((std::istreambuf_iterator<char>(infile)), std::istreambuf_iterator<char>());
-    response = "HTTP/1.1 200 OK\r\n"
-               "Content-Type: text/html\r\n"
-               "Content-Length: " + std::to_string(response.size()) + "\r\n\r\n"
-               + response;
-    infile.close();
+    response = code200 + std::to_string(response.size()) + "\r\n\r\n" + response;
   }
 }

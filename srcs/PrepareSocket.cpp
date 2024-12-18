@@ -1,8 +1,10 @@
 #include "../includes/webserv.hpp"
 
-int prepareSocket(int &listening_socket, std::vector<pollfd>& fd_vec) {
+int prepareSocket(std::vector<pollfd>& fd_vec, std::map<int, Server>& server_map) {
 
   struct sockaddr_in addr;
+  int listening_socket;
+
 
   listening_socket = socket(AF_INET, SOCK_STREAM, 0);
   if (listening_socket == -1)
@@ -26,6 +28,16 @@ int prepareSocket(int &listening_socket, std::vector<pollfd>& fd_vec) {
   server_fd.events = POLLIN;
   server_fd.revents = 0;
   fd_vec.push_back(server_fd);
+
+  Server new_server;
+  new_server.methods = {GET, POST};
+  new_server.ports = {PORT};
+  new_server.max_body_size = MAX_REQUEST_SIZE;
+  new_server.server_socket = listening_socket;
+  new_server.server_name = "HARDCODED SERVER";
+  new_server.root_directory = "";
+  server_map.emplace(listening_socket, new_server);
+
 
   return (0);
 }

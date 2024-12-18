@@ -3,11 +3,10 @@
 #include "webserv.hpp"
 #include "Request.hpp"
 
-
 struct Client
 {
-
-  int   fd;
+  int server_fd;
+  int fd;
   int status;
   time_t timeout;
   std::string request;

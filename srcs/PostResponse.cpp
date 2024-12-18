@@ -1,4 +1,5 @@
 #include "../includes/webserv.hpp"
+#include "../includes/CharArrays.hpp"
 
 void post_response(Client& client) {
 
@@ -23,10 +24,10 @@ void post_response(Client& client) {
   } else {
     post_request_simple_handler(client.waitlist[0]);
   }
-  client.waitlist[0].response = "HTTP/1.1 201 Created\r\n"
-             "Content-Type: " + client.waitlist[0].header_map["Content-Type"] + "\r\n" +
-             "Content-Length: " + std::to_string(client.waitlist[0].content_length) + "\r\n\r\n";
-  std::clog << client.waitlist[0].response << std::endl;
+  std::ifstream infile("www/01-pages/201.html");
+  //TODO: remove toString
+  client.waitlist[0].response = std::string((std::istreambuf_iterator<char>(infile)), std::istreambuf_iterator<char>());
+  client.waitlist[0].response = code201 + std::to_string(client.waitlist[0].response.size()) + "\r\n\r\n" + client.waitlist[0].response;
 }
 
 int post_request_simple_handler(Request& request) {

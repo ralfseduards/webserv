@@ -2,15 +2,14 @@
 
 #include "webserv.hpp"
 
-class Server
+struct Server
 {
-private:
-  /* data */
-public:
-  Server(/* args */);
-  ~Server();
-
-  int listening_socket;
-  std::vector<pollfd> fd_vec;
-
+  int server_socket;
+  std::string       server_name;
+  std::string       root_directory;
+  std::vector<int>  ports;
+  std::vector<int>  methods;
+  std::size_t       max_body_size;
 };
+
+

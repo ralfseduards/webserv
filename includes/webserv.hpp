@@ -23,7 +23,7 @@
 #include <sstream>
 #include <regex>
 #include "Client.hpp"
-
+#include "Server.hpp"
 
 
 enum client_status {
@@ -31,32 +31,37 @@ enum client_status {
   RECEIVING,
   DISCONNECTED,
   HUNGUP,
+  POLLINVALID,
   ERROR,
   HEADER_INVAL_COLON,
   HEADER_INVAL_REGEX_KEY,
   HEADER_INVAL_REGEX_VAL,
   HEADER_INVAL_SIZE,
+  BODY_TOO_LARGE
 };
 
 
 enum port {
   PORT = 8080,
   MAX_CLIENTS = 100,
-  BUFFER_SIZE = 8192,
-  MAX_REQUEST_SIZE = 10 * BUFFER_SIZE
+  BUFFER_SIZE = 8000,
+  MAX_REQUEST_SIZE = 10 * 8000,
+  SERVER_NUMBER = 1
 };
 
 enum messages {
-  GET = 0,
-  POST = 1,
-  DELETE = 2
+  GET,
+  POST,
+  DELETE,
+  HEAD,
+  INVALID
 };
 
 void signal_handler(int sig);
-int prepareSocket(int &listening_socket, std::vector<pollfd>& fd_vec);
+int prepareSocket(std::vector<pollfd>& fd_vec, std::map<int, Server>& server_map);
 
 void client_add_vec(int client_fd, std::vector<pollfd>& fd_vec);
-void client_add_map( std::map<int, Client>& client_map, int fd);
+void client_add_map(std::map<int, Client>& client_map, int fd, int server_fd);
 void client_error(size_t i, int fd, int status);
 void client_remove(size_t& i, std::map<int, Client>& client_map, std::vector<pollfd>& fd_vec);
 

@@ -36,7 +36,7 @@ int main(void) {
           if (client_fd < 0)
             continue;
           client_add_vec(client_fd, fd_vec);
-          client_add_map(client_map, client_fd, (*it).second.server_socket);
+          client_add_map(client_map, client_fd, &((*it).second));
         }
         else {
           (void)receive_request(fd_vec[i], client_map[fd_vec[i].fd]);

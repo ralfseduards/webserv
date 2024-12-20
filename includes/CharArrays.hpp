@@ -3,6 +3,7 @@
 
 const char code200[] = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: ";
 const char code201[] = "HTTP/1.1 201 Created\r\nContent-Type: text/html\r\nContent-Length: ";
+const char code204[] = "HTTP/1.1 204 No Content\r\nContent-Type: text/html\r\nContent-Length: ";
 
 const char code400[] = "HTTP/1.1 400 Bad Request\r\nContent-Type: text/html\r\nContent-Length: ";
 const char code404[] = "HTTP/1.1 404 Not Found\r\nContent-Type: text/html\r\nContent-Length: ";

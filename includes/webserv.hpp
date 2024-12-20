@@ -4,23 +4,25 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/sendfile.h>
+
+#include <netinet/in.h>
+#include <poll.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
-#include <poll.h>
-#include <netinet/in.h>
+
 #include <iostream>
+#include <sstream>
 #include <fstream>
 #include <string>
 #include <cstring>
+#include <cstdio>
 #include <vector>
 #include <algorithm>
-#include <poll.h>
 #include <signal.h>
 #include <exception>
 #include <filesystem>
 #include <map>
-#include <sstream>
 #include <regex>
 #include "Client.hpp"
 #include "Server.hpp"
@@ -61,7 +63,7 @@ void signal_handler(int sig);
 int prepareSocket(std::vector<pollfd>& fd_vec, std::map<int, Server>& server_map);
 
 void client_add_vec(int client_fd, std::vector<pollfd>& fd_vec);
-void client_add_map(std::map<int, Client>& client_map, int fd, int server_fd);
+void client_add_map(std::map<int, Client>& client_map, int fd, Server* server);
 void client_error(size_t i, int fd, int status);
 void client_remove(size_t& i, std::map<int, Client>& client_map, std::vector<pollfd>& fd_vec);
 
@@ -76,3 +78,4 @@ void post_response(Client& client);
 int post_request_header_parser(Client& client);
 int post_request_part_handler(Request& request);
 int post_request_simple_handler(Request& request);
+void delete_response(Client& client);

@@ -38,7 +38,6 @@ int post_request_simple_handler(Request& request) {
   return (0);
 }
 
-
 int post_request_part_handler(Request& request) {
 
   while (request.body != request.header_map.at("boundary=") + "--\r\n") {

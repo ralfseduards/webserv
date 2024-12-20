@@ -96,6 +96,7 @@ void process_request(Client& client) {
     break;
 
   case DELETE:
+    // delete_response(client);
     break;
 
   case HEAD:

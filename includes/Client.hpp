@@ -1,11 +1,13 @@
 #pragma once
 
 #include "webserv.hpp"
+#include "Server.hpp"
+
 #include "Request.hpp"
 
 struct Client
 {
-  int server_fd;
+  Server* server;
   int fd;
   int status;
   time_t timeout;

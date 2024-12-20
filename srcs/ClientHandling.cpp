@@ -20,12 +20,12 @@ void client_add_vec(int client_fd, std::vector<pollfd>& fd_vec) {
   return ;
 }
 
-void client_add_map(std::map<int, Client>& client_map, int fd, int server_fd) {
+void client_add_map(std::map<int, Client>& client_map, int fd, Server* server) {
   Client new_client;
 
   new_client.fd = fd;
   new_client.status = OK;
-  new_client.server_fd = server_fd;
+  new_client.server = server;
   client_map.emplace(fd, new_client);
   return ;
 }
@@ -64,7 +64,7 @@ void client_error(size_t i, int fd, int status) {
   //TODO: send error 413
   case BODY_TOO_LARGE:
     std::clog << "Client " << i << " on fd " << fd << " Content too large" << std::endl;
-
+    break;
   default:
     std::cerr << "Unknown Error status on " << i << "with fd " << fd << "\nError: " << status << std::endl;
     break;

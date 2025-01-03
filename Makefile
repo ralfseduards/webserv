@@ -4,7 +4,7 @@ NAME = webserv.out
 MAKEFLAGS = --no-print-directory
 
 SRC =	srcs/main.cpp\
-			srcs/ServerCreate.cpp.cpp\
+			srcs/ServerCreate.cpp\
 			srcs/ClientHandling.cpp\
 			srcs/RequestParser.cpp\
 			srcs/GetResponse.cpp\

@@ -6,7 +6,7 @@
 int receive_request(pollfd& client_socket, Client& client) {
 
   ssize_t message_size;
-  size_t header_length;
+  std::size_t header_length;
 
   //Create a buffer and set it to 0
   char request_buffer[BUFFER_SIZE + 1];

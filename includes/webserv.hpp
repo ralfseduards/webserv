@@ -48,7 +48,7 @@ enum port {
   MAX_CLIENTS = 100,
   BUFFER_SIZE = 8000,
   MAX_REQUEST_SIZE = 10 * 8000,
-  SERVER_NUMBER = 1
+  SERVER_NUMBER = 2
 };
 
 enum messages {
@@ -60,7 +60,12 @@ enum messages {
 };
 
 void signal_handler(int sig);
-int prepareSocket(std::vector<pollfd>& fd_vec, std::map<int, Server>& server_map);
+
+int getSocket(std::vector<pollfd>& fd_vec, int port);
+int createServers(std::vector<pollfd>& fd_vec, std::map<int, Server>& server_map);
+
+
+// int prepareSocket(std::vector<pollfd>& fd_vec, std::map<int, Server>& server_map);
 
 void client_add_vec(int client_fd, std::vector<pollfd>& fd_vec);
 void client_add_map(std::map<int, Client>& client_map, int fd, Server* server);

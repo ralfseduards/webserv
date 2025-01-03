@@ -3,6 +3,7 @@
 int g_sig = 0;
 
 int main(void) {
+  signal(SIGINT, signal_handler);
 
   std::vector<pollfd> fd_vec;       //A map of all pollfds, Servers at front
   std::map<int, Server> server_map; //A map of the server data keyed to the fd
@@ -10,9 +11,9 @@ int main(void) {
 
   //TODO: Parse config file
 
+  createServers(fd_vec, server_map);
 
-  signal(SIGINT, signal_handler);
-  prepareSocket(fd_vec, server_map);
+  // prepareSocket(fd_vec, server_map);
 
   //main loop
   while (true && !g_sig) {
@@ -30,7 +31,7 @@ int main(void) {
         continue;
       }
       if (fd_vec[i].revents & POLLIN) {
-        if (i < SERVER_NUMBER) {
+        if (i < server_map.size()) {
           std::map<int, Server>::iterator it = server_map.find(fd_vec[i].fd);
           int client_fd = accept((*it).second.server_socket, 0,0);
           if (client_fd < 0)

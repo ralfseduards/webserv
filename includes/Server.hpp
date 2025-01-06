@@ -8,7 +8,7 @@ struct Server
   std::string       server_name;
   std::string       root_directory;
   std::vector<int>  ports;
-  std::vector<int>  methods;
+  unsigned char     methods;
   std::size_t       max_body_size;
 };
 

@@ -15,4 +15,4 @@ const char code505[] = "HTTP/1.1 505 HTTP Version Not Supported\r\nContent-Type:
 
 const char pathNotFound[] = "www/01-pages/404.html";
 const char pathForbidden[] = "www/01-pages/403.html";
-
+const char notImplemented[] = "www/01-pages/501.html";

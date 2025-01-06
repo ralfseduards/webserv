@@ -39,7 +39,8 @@ enum client_status {
   HEADER_INVAL_REGEX_KEY,
   HEADER_INVAL_REGEX_VAL,
   HEADER_INVAL_SIZE,
-  BODY_TOO_LARGE
+  BODY_TOO_LARGE,
+  BAD_METHOD
 };
 
 
@@ -51,13 +52,11 @@ enum port {
   SERVER_NUMBER = 2
 };
 
-enum messages {
-  GET,
-  POST,
-  DELETE,
-  HEAD,
-  INVALID
-};
+#define GET     1   // bit 0
+#define POST    2   // bit 1
+#define DELETE  4   // bit 2
+#define HEAD    8   // bit 3
+#define INVALID 16  // bit 4
 
 void signal_handler(int sig);
 void close_fds(std::vector<pollfd>& fd_vec);

@@ -1,6 +1,7 @@
 #include "../includes/webserv.hpp"
 #include "../includes/Client.hpp"
 #include "../includes/Request.hpp"
+#include "../includes/CharArrays.hpp"
 
 int incoming_message(std::vector<pollfd>& fd_vec, std::map<int, Client>& client_map, std::size_t& i) {
   (void)receive_request(fd_vec[i], client_map[fd_vec[i].fd]); //return value voided for clarity, new method uses state in struct
@@ -53,6 +54,7 @@ int receive_request(pollfd& client_socket, Client& client) {
   header_length = client.request.find("\r\n\r\n");
   if (header_length != std::string::npos) {
     Request new_request;
+    new_request.type = 0;
     client.status = read_header(client.request.substr(0, client.request.find("\r\n\r\n")), new_request);
     if (client.status != OK && client.status != RECEIVING)
       return (client.status);
@@ -92,6 +94,10 @@ void process_request(Client& client) {
 
   set_type(client);
 
+  if ((client.server->methods & client.waitlist[0].type) == 0) {
+    client.waitlist[0].type = INVALID;
+  }
+
   switch (client.waitlist[0].type)
   {
   case GET:
@@ -113,7 +119,11 @@ void process_request(Client& client) {
     break;
 
   default:
-    //TODO: send error 501
+    //TODO: manage file paths
+    std::ifstream infile(notImplemented);
+    //TODO: remove toString
+    client.waitlist[0].response = std::string((std::istreambuf_iterator<char>(infile)), std::istreambuf_iterator<char>());
+    client.waitlist[0].response = code501 + std::to_string(client.waitlist[0].response.size()) + "\r\n\r\n" + client.waitlist[0].response;
     std::cout << "Invalid Request" << std::endl;
     break;
   }
@@ -123,8 +133,6 @@ void process_request(Client& client) {
   client.waitlist.erase(client.waitlist.begin());
 }
 
-// void build_response(Client& client) {
-// }
 
 int read_header(std::string header, Request& new_request) {
 

@@ -1,33 +1,31 @@
 #include "../includes/webserv.hpp"
 #include "../includes/CharArrays.hpp"
 
+
 void post_response(Client& client) {
 
   if (client.request.size() < client.waitlist[0].content_length) {
     client.status = RECEIVING;
     return ;
   }
-
   client.status = post_request_header_parser(client);
-  if (client.status != OK)
+  if (client.status != OK) {
+    std::clog << "Client Status: " << client.status << std::endl;
     return;
+  }
 
   // Extract the body from the request string
   client.waitlist[0].body = client.request.substr(0, client.waitlist[0].content_length);
   client.request.erase(0, client.waitlist[0].content_length);
   client.status = OK;
 
-  // TODO: split multiparts into seperate streams on boundary
-
   if (client.waitlist[0].header_map.find("boundary=") != client.waitlist[0].header_map.end()) {
     post_request_part_handler(client.waitlist[0]);
   } else {
     post_request_simple_handler(client.waitlist[0]);
   }
-  std::ifstream infile("www/01-pages/201.html");
-  //TODO: remove toString
-  client.waitlist[0].response = std::string((std::istreambuf_iterator<char>(infile)), std::istreambuf_iterator<char>());
-  client.waitlist[0].response = code201 + std::to_string(client.waitlist[0].response.size()) + "\r\n\r\n" + client.waitlist[0].response;
+
+  response_builder(client.waitlist[0].response, 201);
 }
 
 int post_request_simple_handler(Request& request) {
@@ -64,7 +62,7 @@ int post_request_part_handler(Request& request) {
     body_end = request.body.find(request.header_map.at("boundary="));
     std::remove(request.body.begin(), request.body.begin() + body_end, '\r');
 
-    std::ofstream outfile("www/02-received/" + filename);
+    std::ofstream outfile("www/02-received/" + filename, std::ios::out | std::ios::binary);
     outfile << request.body.substr(0, body_end - 2);
     outfile.close();
     request.body.erase(request.body.begin(), request.body.begin() + body_end);

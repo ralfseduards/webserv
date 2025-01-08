@@ -16,7 +16,7 @@ int incoming_message(std::vector<pollfd>& fd_vec, std::map<int, Client>& client_
 
 int receive_request(pollfd& client_socket, Client& client) {
 
-  ssize_t message_size;
+  ssize_t bytes_received;
   std::size_t header_length;
 
   //Create a buffer and set it to 0
@@ -24,14 +24,14 @@ int receive_request(pollfd& client_socket, Client& client) {
   memset(request_buffer, 0, BUFFER_SIZE + 1);
 
   //Read from the socket buffer in request buffer
-  message_size = recv(client_socket.fd, request_buffer, BUFFER_SIZE, 0);
+  bytes_received = recv(client_socket.fd, request_buffer, BUFFER_SIZE, 0);
 
-  if (message_size == 0) {
+  if (bytes_received == 0) {
     std::clog << '0' << std::endl;
     client.status = DISCONNECTED;
     return (DISCONNECTED);
   }
-  else if (message_size < 0) {
+  else if (bytes_received < 0) {
     client.status = ERROR;
     return (ERROR);
   }
@@ -39,7 +39,7 @@ int receive_request(pollfd& client_socket, Client& client) {
     std::clog << request_buffer << std::endl;
 
   //Add the request buffer into a string
-  client.request.append(request_buffer);
+  client.request.append(request_buffer, bytes_received);
 
   //If the Client is currently receiving from previous POST, jump there
   if (client.status == RECEIVING) {
@@ -85,16 +85,18 @@ void set_type(Client& client) {
     client.waitlist[0].type = DELETE;
   else if (temp == "HEAD")
     client.waitlist[0].type = HEAD;
-  else
+  else {
     client.waitlist[0].type = INVALID;
+    std::clog << "Unexpected request: " << temp << std::endl;
+  }
 }
-
 
 void process_request(Client& client) {
 
   set_type(client);
 
   if ((client.server->methods & client.waitlist[0].type) == 0) {
+    std::clog << "Not implemented method: " << client.waitlist[0].type << std::endl;
     client.waitlist[0].type = INVALID;
   }
 
@@ -109,6 +111,8 @@ void process_request(Client& client) {
     //TODO: replace [] map indexing to prevent emplacing new values
     client.waitlist[0].content_length = std::stoi(client.waitlist[0].header_map["Content-Length"]);
     post_response(client);
+    if (client.status == RECEIVING)
+      return ;
     break;
 
   case DELETE:
@@ -118,13 +122,12 @@ void process_request(Client& client) {
   case HEAD:
     break;
 
+  case INVALID:
+    response_builder(client.waitlist[0].response, 501);
+    break;
+
   default:
-    //TODO: manage file paths
-    std::ifstream infile(notImplemented);
-    //TODO: remove toString
-    client.waitlist[0].response = std::string((std::istreambuf_iterator<char>(infile)), std::istreambuf_iterator<char>());
-    client.waitlist[0].response = code501 + std::to_string(client.waitlist[0].response.size()) + "\r\n\r\n" + client.waitlist[0].response;
-    std::cout << "Invalid Request" << std::endl;
+    response_builder(client.waitlist[0].response, 501);
     break;
   }
 

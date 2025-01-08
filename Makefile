@@ -1,5 +1,5 @@
 CXX = c++
-CXXFLAGS = -Wall -Wextra -Werror
+CXXFLAGS = -Wall -Wextra -Werror -g3
 NAME = webserv.out
 MAKEFLAGS = --no-print-directory
 
@@ -8,7 +8,8 @@ SRC =	srcs/main.cpp\
 			srcs/ClientHandling.cpp\
 			srcs/RequestParser.cpp\
 			srcs/GetResponse.cpp\
-			srcs/PostResponse.cpp
+			srcs/PostResponse.cpp\
+			srcs/ResponseBuilder.cpp
 
 OBJ = $(SRC:.cpp=.o)
 

@@ -7,12 +7,12 @@ void delete_response(Client& client) {
   std::ifstream file(request_file);
 
   if (!file) {
-    client.waitlist[0].response = code204;
+    // client.waitlist[0].response = code204;
     return ;
   }
 
   if (std::remove(request_file.c_str()) == 0) {
-    client.waitlist[0].response = code200;
+    // client.waitlist[0].response = code200;
   } else {
       //TODO: add http response
       std::perror("Error deleting file");

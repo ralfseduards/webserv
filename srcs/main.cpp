@@ -34,13 +34,13 @@ int main(void) {
       //   continue;
       // }
 
-      if (fd_vec[i].revents & POLLIN) {
-        if (i < server_map.size())
-          new_client(fd_vec, server_map, client_map, i);
-        else
-          incoming_message(fd_vec, client_map, i);
+      if (fd_vec[i].revents & POLLIN && i < server_map.size())
+        new_client(fd_vec, server_map, client_map, i);
+      if (fd_vec[i].revents & POLLIN && i >= server_map.size()) {
+        if (chdir(client_map.at(fd_vec[i].fd).server->root_directory.c_str()) == -1)
+          break;
+        incoming_message(fd_vec, client_map, i);
       }
-
     }
   }
   close_fds(fd_vec);

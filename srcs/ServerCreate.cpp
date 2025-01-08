@@ -34,12 +34,12 @@ int getSocket(std::vector<pollfd>& fd_vec, int port) {
 int createServers(std::vector<pollfd>& fd_vec, std::map<int, Server>& server_map) {
 
   Server new_server;
-  new_server.methods |= (POST | DELETE);
+  new_server.methods |= (GET | POST | DELETE);
   new_server.ports = {8080};
   new_server.max_body_size = MAX_REQUEST_SIZE;
   new_server.server_socket = getSocket(fd_vec, 8080);
   new_server.server_name = "HARDCODED SERVER";
-  new_server.root_directory = "";
+  new_server.root_directory = "/home/tsurma/Documents/common_core/webserv";
 
   if (new_server.server_socket == -1) {
     exit(ERROR); //TODO: elaborate, log, cleanup
@@ -48,12 +48,12 @@ int createServers(std::vector<pollfd>& fd_vec, std::map<int, Server>& server_map
   server_map.emplace(new_server.server_socket, new_server);
 
   Server new_server2;
-  new_server2.methods |= (GET | POST | DELETE);
+  new_server2.methods |= (GET | DELETE);
   new_server2.ports = {8081};
   new_server2.max_body_size = MAX_REQUEST_SIZE;
   new_server2.server_socket = getSocket(fd_vec, 8081);
   new_server2.server_name = "HARDCODED SERVER2";
-  new_server2.root_directory = "";
+  new_server2.root_directory = "/home/tsurma/Documents/common_core/webserv";
 
   if (new_server2.server_socket == -1) {
     exit(ERROR); //TODO: elaborate, log, cleanup

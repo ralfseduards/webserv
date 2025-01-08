@@ -48,6 +48,8 @@ int receive_request(pollfd& client_socket, Client& client) {
         return (BODY_TOO_LARGE);
       }
     post_response(client);
+    send(client.fd, client.waitlist[0].response.c_str(), client.waitlist[0].response.length(), 0);
+    client.waitlist.erase(client.waitlist.begin());
   }
 
   //Check if a full Header is present, and if so push a new request into the queue
@@ -58,7 +60,7 @@ int receive_request(pollfd& client_socket, Client& client) {
     client.status = read_header(client.request.substr(0, client.request.find("\r\n\r\n")), new_request);
     if (client.status != OK && client.status != RECEIVING)
       return (client.status);
-    client.request.erase(0, client.request.find("\r\n\r\n") + 4);
+    client.request.erase(0, client.request.find("\r\n\r\n") + 4); // delete the header from the request
     client.waitlist.push_back(new_request);
   }
   // If we got here there ws no header present and the client is not actively

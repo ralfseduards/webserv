@@ -1,5 +1,4 @@
 #include "../includes/webserv.hpp"
-#include "../includes/CharArrays.hpp"
 
 void delete_response(Client& client) {
 

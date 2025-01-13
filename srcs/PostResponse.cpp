@@ -1,6 +1,4 @@
 #include "../includes/webserv.hpp"
-#include "../includes/CharArrays.hpp"
-
 
 void post_response(Client& client) {
 

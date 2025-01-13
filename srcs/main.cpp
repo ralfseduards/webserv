@@ -40,6 +40,9 @@ int main(void) {
         if (chdir(client_map.at(fd_vec[i].fd).server->root_directory.c_str()) == -1)
           break;
         incoming_message(fd_vec, client_map, i);
+        if (client_map.at(fd_vec[i].fd).status == CLOSE) {
+          client_remove(i, client_map, fd_vec);
+        }
       }
     }
   }

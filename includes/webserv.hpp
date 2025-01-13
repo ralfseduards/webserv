@@ -33,6 +33,7 @@ enum client_status {
   RECEIVING,
   DISCONNECTED,
   HUNGUP,
+  CLOSE,
   POLLINVALID,
   ERROR,
   HEADER_INVAL_COLON,
@@ -47,7 +48,7 @@ enum client_status {
 enum port {
   MAX_CLIENTS = 100,
   BUFFER_SIZE = 8000,
-  MAX_REQUEST_SIZE = 10 * 8000
+  MAX_REQUEST_SIZE = 10000 * 8000
 };
 
 #define GET     1   // bit 0
@@ -77,8 +78,10 @@ void process_request(Client& client);
 int read_header(std::string header, Request& new_request);
 bool validate_header_key(std::string& key);
 bool validate_header_value(std::string& value);
+bool check_redirection(std::string& request_file);
 
-void get_response(std::string& request, std::string& response);
+
+bool get_response(std::string& request, std::string& response);
 void delete_response(Client& client);
 void post_response(Client& client);
 int post_request_header_parser(Client& client);

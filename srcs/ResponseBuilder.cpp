@@ -1,5 +1,4 @@
 #include "../includes/webserv.hpp"
-#include "../includes/CharArrays.hpp"
 
 void response_builder(std::string& response, int code) {
 
@@ -11,6 +10,9 @@ void response_builder(std::string& response, int code) {
   {
   case 201:
     infile.open(path + "/" + "201.html");
+    break;
+
+  case 301:
     break;
 
   case 404:
@@ -26,17 +28,23 @@ void response_builder(std::string& response, int code) {
     break;
 
   default:
+    infile.open(path + "/" + "500.html");
     return;
   }
-file = std::string((std::istreambuf_iterator<char>(infile)), std::istreambuf_iterator<char>());
-std::stringstream filesize;
-filesize << file.size();
 
+  if (!infile.is_open() || code == 301) {
 
-generate_header(response, code);
-response.append(filesize.str());
-response.append("\r\n\r\n");
-response.append(file);
+    response = "HTTP/1.1 301 Moved Permanently\r\nlocation: " + response + "\r\nConnection: close"+ "\r\n\r\n";
+    return ;
+  }
+
+  file = std::string((std::istreambuf_iterator<char>(infile)), std::istreambuf_iterator<char>());
+  std::stringstream filesize;
+  filesize << file.size();
+  generate_header(response, code);
+  response.append(filesize.str());
+  response.append("\r\n\r\n");
+  response.append(file);
 }
 
 void generate_header(std::string& header, std::size_t code) {
@@ -49,12 +57,20 @@ void generate_header(std::string& header, std::size_t code) {
     header.append("200 OK");
     break;
 
+  case 2001:
+    header.append("200 OK");
+    break;
+
   case 201:
     header.append("201 Created");
     break;
 
   case 204:
     header.append("204 No Content");
+    break;
+
+  case 301:
+    header.append("301 Moved Permanently");
     break;
 
   case 400:
@@ -82,8 +98,12 @@ void generate_header(std::string& header, std::size_t code) {
     break;
 
   default:
+    header.append("500 Internal Server Error");
     std::clog << "Error in header generation unknown case" << std::endl;
     break;
   }
-  header.append("\r\nContent-Type: text/html\r\nContent-Length: ");
+  if (code == 2001)
+    header.append("\r\nContent-Type: image/png\r\nContent-Length: ");
+  else
+    header.append("\r\nContent-Type: text/html\r\nContent-Length: ");
 }

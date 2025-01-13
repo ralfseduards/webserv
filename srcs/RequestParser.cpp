@@ -1,7 +1,6 @@
 #include "../includes/webserv.hpp"
 #include "../includes/Client.hpp"
 #include "../includes/Request.hpp"
-#include "../includes/CharArrays.hpp"
 
 int incoming_message(std::vector<pollfd>& fd_vec, std::map<int, Client>& client_map, std::size_t& i) {
   (void)receive_request(fd_vec[i], client_map[fd_vec[i].fd]); //return value voided for clarity, new method uses state in struct
@@ -33,6 +32,7 @@ int receive_request(pollfd& client_socket, Client& client) {
   }
   else if (bytes_received < 0) {
     client.status = ERROR;
+    std::cout << "bytes received smaller 0" << std::endl;
     return (ERROR);
   }
   else
@@ -48,8 +48,12 @@ int receive_request(pollfd& client_socket, Client& client) {
         return (BODY_TOO_LARGE);
       }
     post_response(client);
+    if (client.status == RECEIVING)
+      return OK;
     send(client.fd, client.waitlist[0].response.c_str(), client.waitlist[0].response.length(), 0);
     client.waitlist.erase(client.waitlist.begin());
+    client.status = OK;
+    return OK;
   }
 
   //Check if a full Header is present, and if so push a new request into the queue
@@ -63,13 +67,20 @@ int receive_request(pollfd& client_socket, Client& client) {
     client.request.erase(0, client.request.find("\r\n\r\n") + 4); // delete the header from the request
     client.waitlist.push_back(new_request);
   }
-  // If we got here there ws no header present and the client is not actively
+  // If we got here there was no header present and the client is not actively
   // receiving. If the header becomes too big return error
-  if (client.request.size() >= MAX_REQUEST_SIZE)
+  if (client.request.size() >= MAX_REQUEST_SIZE) {
+    std::clog << "client request size larger than max" << std::endl;
     return (HEADER_INVAL_SIZE);
+  }
 
   return (0);
 }
+
+// int header_map_validation(std::map<std::string, std::string>& header_map) {
+
+// }
+
 
 void set_type(Client& client) {
 
@@ -105,7 +116,9 @@ void process_request(Client& client) {
   switch (client.waitlist[0].type)
   {
   case GET:
-    get_response(client.waitlist[0].start_line, client.waitlist[0].response);
+
+    if (get_response(client.waitlist[0].start_line, client.waitlist[0].response))
+      client.status = CLOSE;
     break;
 
   case POST:
@@ -135,6 +148,8 @@ void process_request(Client& client) {
 
   //send the response and delete all temp data
   send(client.fd, client.waitlist[0].response.c_str(), client.waitlist[0].response.length(), 0);
+  if (client.waitlist[0].response.find("png") == std::string::npos)
+    std::clog << "///////////////////////////////\n" << "client.fd: " << client.fd << "\nResponse:\n" << client.waitlist[0].response << std::endl;
   client.waitlist.erase(client.waitlist.begin());
 }
 
@@ -154,10 +169,15 @@ int read_header(std::string header, Request& new_request) {
       line.pop_back();
     std::replace(line.begin(), line.end(), '\r', ' ');
 
+    if (line.empty())
+      break;
+
     //Find the mandatory colon that seperates key from content
     size_t colon = line.find(':');
-    if (colon == std::string::npos)
+    if (colon == std::string::npos) {
+      std::clog << "Header colon not found\n" << line << std:: endl;
       return (HEADER_INVAL_COLON);
+    }
 
     std::string key = line.substr(0, colon);
     std::string value = line.substr(colon + 1);
@@ -170,10 +190,14 @@ int read_header(std::string header, Request& new_request) {
     //Put the "key" and "value" into the hader map. The key does NOT have the colon
     new_request.header_map.emplace(key, value);
 
-    if (validate_header_key(key) == false)
+    if (validate_header_key(key) == false) {
+      std::clog << "header key validation failed" << std::endl;
       return (HEADER_INVAL_REGEX_KEY);
-    if (validate_header_key(key) == false)
+    }
+    if (validate_header_value(value) == false) {
+      std::clog << "header value validation failed" << std::endl;
       return (HEADER_INVAL_REGEX_VAL);
+    }
   }
   return (0);
 }

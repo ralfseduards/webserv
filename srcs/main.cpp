@@ -23,7 +23,7 @@ int main(void) {
       }
 
       if (fd_vec[i].revents & POLLERR) {
-        client_error(i, fd_vec[i].fd, ERROR);
+        client_error(i, fd_vec[i].fd, ERRPOLL);
         client_remove(i, client_map, fd_vec);
         continue;
       }
@@ -34,13 +34,13 @@ int main(void) {
       //   continue;
       // }
 
-      if (fd_vec[i].revents & POLLIN && i < server_map.size())
+      if ((fd_vec[i].revents & POLLIN) && (i < server_map.size()))
         new_client(fd_vec, server_map, client_map, i);
       if (fd_vec[i].revents & POLLIN && i >= server_map.size()) {
         if (chdir(client_map.at(fd_vec[i].fd).server->root_directory.c_str()) == -1)
           break;
         incoming_message(fd_vec, client_map, i);
-        if (client_map.at(fd_vec[i].fd).status == CLOSE) {
+        if (client_map.at(fd_vec[i].fd).status != OK && client_map.at(fd_vec[i].fd).status != RECEIVING) {
           client_remove(i, client_map, fd_vec);
         }
       }

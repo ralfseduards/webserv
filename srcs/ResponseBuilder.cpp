@@ -13,14 +13,15 @@ void response_builder(std::string& response, int code) {
     break;
 
   case 301:
+    response = "HTTP/1.1 301 Moved Permanently\r\nlocation: " + response + "\r\nConnection: close"+ "\r\n\r\n";
+    return;
+
+  case 403:
+    infile.open(path + "/" + "403.html");
     break;
 
   case 404:
     infile.open(path + "/" + "404.html");
-    break;
-
-  case 403:
-    infile.open(path + "/" + "403.html");
     break;
 
   case 501:
@@ -32,13 +33,13 @@ void response_builder(std::string& response, int code) {
     return;
   }
 
-  if (!infile.is_open() || code == 301) {
-
-    response = "HTTP/1.1 301 Moved Permanently\r\nlocation: " + response + "\r\nConnection: close"+ "\r\n\r\n";
-    return ;
+  if (!infile.is_open()) {
+    file = "<html><body><h1>404 Not Found</h1></body></html>";
+    code = 404;
   }
+  else
+    file = std::string((std::istreambuf_iterator<char>(infile)), std::istreambuf_iterator<char>());
 
-  file = std::string((std::istreambuf_iterator<char>(infile)), std::istreambuf_iterator<char>());
   std::stringstream filesize;
   filesize << file.size();
   generate_header(response, code);
@@ -50,7 +51,6 @@ void response_builder(std::string& response, int code) {
 void generate_header(std::string& header, std::size_t code) {
 
   header = "HTTP/1.1 ";
-
   switch (code)
   {
   case 200:
@@ -89,6 +89,10 @@ void generate_header(std::string& header, std::size_t code) {
     header.append("413 Content Too Large");
     break;
 
+  case 500:
+    header.append("500 Internal Server Error");
+    break;
+
   case 501:
     header.append("501 Not Implemented");
     break;
@@ -102,6 +106,7 @@ void generate_header(std::string& header, std::size_t code) {
     std::clog << "Error in header generation unknown case" << std::endl;
     break;
   }
+
   if (code == 2001)
     header.append("\r\nContent-Type: image/png\r\nContent-Length: ");
   else

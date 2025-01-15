@@ -4,10 +4,8 @@
 
 int incoming_message(std::vector<pollfd>& fd_vec, std::map<int, Client>& client_map, std::size_t& i) {
   (void)receive_request(fd_vec[i], client_map[fd_vec[i].fd]); //return value voided for clarity, new method uses state in struct
-  if (client_map[fd_vec[i].fd].status != OK && client_map[fd_vec[i].fd].status != RECEIVING) {
-    client_error(i, fd_vec[i].fd, client_map[fd_vec[i].fd].status);
-    client_remove(i, client_map, fd_vec);
-  }
+  if (client_map[fd_vec[i].fd].status != OK && client_map[fd_vec[i].fd].status != RECEIVING)
+    return (1);
   else if (client_map[fd_vec[i].fd].waitlist.size() > 0)
     process_request(client_map[fd_vec[i].fd]);
   return (0);
@@ -26,7 +24,7 @@ int receive_request(pollfd& client_socket, Client& client) {
   bytes_received = recv(client_socket.fd, request_buffer, BUFFER_SIZE, 0);
 
   if (bytes_received == 0) {
-    std::clog << '0' << std::endl;
+    std::clog << "Client Disconnected" << std::endl;
     client.status = DISCONNECTED;
     return (DISCONNECTED);
   }
@@ -117,7 +115,7 @@ void process_request(Client& client) {
   {
   case GET:
 
-    if (get_response(client.waitlist[0].start_line, client.waitlist[0].response))
+    if (get_response(client.waitlist[0].start_line, client.waitlist[0].response) == true)
       client.status = CLOSE;
     break;
 
@@ -146,10 +144,10 @@ void process_request(Client& client) {
     break;
   }
 
+  std::clog << "///////////////////////////////\n" << "client.fd: " << client.fd << "\nResponse:\n" << client.waitlist[0].response << std::endl;
   //send the response and delete all temp data
   send(client.fd, client.waitlist[0].response.c_str(), client.waitlist[0].response.length(), 0);
-  if (client.waitlist[0].response.find("png") == std::string::npos)
-    std::clog << "///////////////////////////////\n" << "client.fd: " << client.fd << "\nResponse:\n" << client.waitlist[0].response << std::endl;
+  // if (client.waitlist[0].response.find("png") == std::string::npos)
   client.waitlist.erase(client.waitlist.begin());
 }
 

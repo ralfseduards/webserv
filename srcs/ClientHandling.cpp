@@ -11,8 +11,8 @@ int new_client(std::vector<pollfd>& fd_vec, std::map<int, Server>& server_map, s
 }
 
 //Removes the Client from the Map and vector does NOT close any connections
-void client_remove(size_t& i, std::map<int, Client>& client_map, std::vector<pollfd>& fd_vec) {
-  std::clog << "Removing Client " << i << " with fd " << fd_vec[i].fd << std::endl;
+void client_remove(std::size_t& i, std::map<int, Client>& client_map, std::vector<pollfd>& fd_vec) {
+  // std::clog << "Removing Client " << i << " with fd " << fd_vec[i].fd << std::endl;
   client_map.erase(fd_vec[i].fd);
   fd_vec.erase(fd_vec.begin() + i);
   --i;
@@ -47,6 +47,11 @@ void client_error(size_t i, int fd, int status) {
   {
   case DISCONNECTED:
     std::clog << "Client: " << i << "\nFD: " << fd << "\nAction: Disconnected" << std::endl;
+    close(fd);
+    break;
+
+  case ERRPOLL:
+    std::clog << "Client " << i << "\nFD: " << fd << "\nAction: POLLERR" << std::endl;
     close(fd);
     break;
 

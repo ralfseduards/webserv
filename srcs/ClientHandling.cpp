@@ -47,22 +47,18 @@ void client_error(size_t i, int fd, int status) {
   {
   case DISCONNECTED:
     std::clog << "Client: " << i << "\nFD: " << fd << "\nAction: Disconnected" << std::endl;
-    close(fd);
     break;
 
   case ERRPOLL:
     std::clog << "Client " << i << "\nFD: " << fd << "\nAction: POLLERR" << std::endl;
-    close(fd);
     break;
 
   case ERROR:
     std::clog << "Client " << i << "\nFD: " << fd << "\nAction: Error" << std::endl;
-    close(fd);
     break;
 
   case HUNGUP:
     std::clog << "Client " << i << "\nFD: " << fd << "\nAction: Hung up" << std::endl;
-    close(fd);
     break;
 
   case POLLINVALID:

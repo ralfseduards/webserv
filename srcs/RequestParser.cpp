@@ -24,12 +24,17 @@ int receive_request(pollfd& client_socket, Client& client) {
   bytes_received = recv(client_socket.fd, request_buffer, BUFFER_SIZE, 0);
 
   if (bytes_received == 0) {
+
+    shutdown(client.fd, SHUT_RDWR);
+    close(client.fd);
     std::clog << "Client Disconnected" << std::endl;
     client.status = DISCONNECTED;
     return (DISCONNECTED);
   }
   else if (bytes_received < 0) {
     client.status = ERROR;
+    shutdown(client.fd, SHUT_RDWR);
+    close(client.fd);
     std::cout << "bytes received smaller 0" << std::endl;
     return (ERROR);
   }

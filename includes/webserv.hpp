@@ -70,7 +70,7 @@ int createServers(std::vector<pollfd>& fd_vec, std::map<int, Server>& server_map
 int new_client(std::vector<pollfd>& fd_vec, std::map<int, Server>& server_map, std::map<int, Client>& client_map, std::size_t& i);
 void client_add_vec(int client_fd, std::vector<pollfd>& fd_vec);
 void client_add_map(std::map<int, Client>& client_map, int fd, Server* server);
-void client_error(size_t i, int fd, int status);
+void client_error_message(size_t i, int fd, int status);
 void client_remove(size_t& i, std::map<int, Client>& client_map, std::vector<pollfd>& fd_vec);
 
 int incoming_message(std::vector<pollfd>& fd_vec, std::map<int, Client>& client_map, std::size_t& i);

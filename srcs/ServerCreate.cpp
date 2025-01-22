@@ -5,7 +5,6 @@ int getSocket(std::vector<pollfd>& fd_vec, int port) {
   struct sockaddr_in addr;
   int listening_socket;
 
-
   listening_socket = socket(AF_INET, SOCK_STREAM, 0);
   if (listening_socket == -1)
     return (-1);
@@ -42,7 +41,8 @@ int createServers(std::vector<pollfd>& fd_vec, std::map<int, Server>& server_map
   new_server.root_directory = "/home/tsurma/Documents/common_core/webserv";
 
   if (new_server.server_socket == -1) {
-    exit(ERROR); //TODO: elaborate, log, cleanup
+    std::cerr << "Error in server creation" << std::endl;
+    return (-1);
   }
 
   server_map.emplace(new_server.server_socket, new_server);

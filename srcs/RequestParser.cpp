@@ -24,18 +24,13 @@ int receive_request(pollfd& client_socket, Client& client) {
   bytes_received = recv(client_socket.fd, request_buffer, BUFFER_SIZE, 0);
 
   if (bytes_received == 0) {
-
-    shutdown(client.fd, SHUT_RDWR);
-    close(client.fd);
     std::clog << "Client Disconnected" << std::endl;
     client.status = DISCONNECTED;
     return (DISCONNECTED);
   }
   else if (bytes_received < 0) {
-    client.status = ERROR;
-    shutdown(client.fd, SHUT_RDWR);
-    close(client.fd);
     std::cout << "bytes received smaller 0" << std::endl;
+    client.status = ERROR;
     return (ERROR);
   }
   else
@@ -89,8 +84,10 @@ void set_type(Client& client) {
 
   size_t prefix_len = client.waitlist[0].start_line.find(' ');
   //TODO: error handling
-  if (prefix_len == std::string::npos)
+  if (prefix_len == std::string::npos) {
+    client.waitlist[0].type = INVALID;
     return ;
+  }
 
   std::string temp = client.waitlist[0].start_line.substr(0, prefix_len);
   if (temp == "GET")
@@ -126,8 +123,7 @@ void process_request(Client& client) {
 
   case POST:
     //TODO: remove stoi
-    //TODO: replace [] map indexing to prevent emplacing new values
-    client.waitlist[0].content_length = std::stoi(client.waitlist[0].header_map["Content-Length"]);
+    client.waitlist[0].content_length = std::stoi(client.waitlist[0].header_map.at("Content-Length"));
     post_response(client);
     if (client.status == RECEIVING)
       return ;

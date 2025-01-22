@@ -21,6 +21,16 @@ void close_fds(std::vector<pollfd>& fd_vec) {
   }
 }
 
+void client_purge(std::size_t& i, std::vector<pollfd>& fd_vec, std::map<int, Client>& client_map, int status) {
+  client_error_message(i, fd_vec[i].fd, status);
+  if (status != POLLINVALID) {
+    shutdown(fd_vec[i].fd, SHUT_RDWR);
+    close(fd_vec[i].fd);
+  }
+  client_remove(i, client_map, fd_vec);
+}
+
+
 int main(void) {
   signal(SIGINT, signal_handler);
 
@@ -29,55 +39,56 @@ int main(void) {
   std::map<int, Client> client_map;  // A map of the client data keyed to the fd
 
   // TODO: Parse config file and populate servers
-  createServers(fd_vec, server_map);
+  g_sig = createServers(fd_vec, server_map);
 
   while (true && !g_sig) {  // Main loop
 
     if (poll(fd_vec.data(), fd_vec.size(), -1) == -1) {
       if (g_sig != 0) continue;  // Interrupted by signal, continue loop
       perror("poll");
-      return (1);
+      break;
     }
 
     for (std::size_t i = 0; i < fd_vec.size(); ++i) {  // Loop through FDs
+
+      // Invalid POLL
       if (fd_vec[i].revents & POLLNVAL) {
-        client_error(i, fd_vec[i].fd, POLLINVALID);
-        shutdown(fd_vec[i].fd, SHUT_RDWR);
-        close(fd_vec[i].fd);
-        client_remove(i, client_map, fd_vec);
+        client_purge(i, fd_vec, client_map, POLLINVALID);
         continue;
       }
 
-      if (fd_vec[i].revents & (POLLERR | POLLHUP)) {
-        client_error(i, fd_vec[i].fd, ERRPOLL);
-        shutdown(fd_vec[i].fd, SHUT_RDWR);
-        close(fd_vec[i].fd);
-        client_remove(i, client_map, fd_vec);
+      // Client error
+      if (fd_vec[i].revents & (POLLERR)) {
+        client_purge(i, fd_vec, client_map, ERRPOLL);
         continue;
       }
 
+      // Client hung up
+      if (fd_vec[i].revents & (POLLHUP)) {
+        client_purge(i, fd_vec, client_map, HUNGUP);
+        continue;
+      }
+
+      // New connection
       if ((fd_vec[i].revents & POLLIN) && (i < server_map.size())) {
         new_client(fd_vec, server_map, client_map, i);
       }
 
+      // Message
       if (fd_vec[i].revents & POLLIN && i >= server_map.size()) {
-        if (chdir(client_map.at(fd_vec[i].fd).server->root_directory.c_str()) == -1)
+        if (chdir(client_map.at(fd_vec[i].fd).server->root_directory.c_str()) == -1) // TODO: move this
           break;
 
         incoming_message(fd_vec, client_map, i);
 
-        if (client_map.at(fd_vec[i].fd).status != OK && client_map.at(fd_vec[i].fd).status != RECEIVING) {
-          client_remove(i, client_map, fd_vec);
+        if (client_map.at(fd_vec[i].fd).status != OK && client_map.at(fd_vec[i].fd).status != RECEIVING) {  // Check client status
+          client_purge(i, fd_vec, client_map, client_map.at(fd_vec[i].fd).status);
         }
       }
     }
   }
 
   close_fds(fd_vec);
-  fd_vec.clear();
-  client_map.clear();
-  server_map.clear();
-  std::cout << fd_vec.size() << client_map.size() << server_map.size() << std::endl;
   std::clog << "Server terminated due to signal " << g_sig << std::endl;
-  return 0;
+  return (0);
 }

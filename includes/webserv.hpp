@@ -82,8 +82,6 @@ void process_request(Client& client);
 int read_header(std::string header, Request& new_request);
 bool validate_header_key(std::string& key);
 bool validate_header_value(std::string& value);
-bool check_redirection(std::string& request_file);
-
 
 void set_type(Client& client);
 bool get_response(Client& client, std::string& request, std::string& response);

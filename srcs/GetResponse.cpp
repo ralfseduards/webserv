@@ -16,11 +16,13 @@ bool set_route(Client& client, std::string& request_file) {
   return (false);
 }
 
+
+// 1. checks if request is in redirection table
+// 2. checks if request is in routing table
+// 3. if not in routing, moves to page directory and searches file in plain
 bool get_response(Client& client, std::string& request, std::string& response) {
 
   std::string request_file(request.begin() + 5, std::find(request.begin() + 5, request.end(), ' '));
-
-  std::cout << request_file << std::endl;
 
   if (check_redirection(client, request_file, response) == true) {
     response_builder(response, 301);
@@ -28,7 +30,11 @@ bool get_response(Client& client, std::string& request, std::string& response) {
   }
 
   if (set_route(client, request_file) == false) {
-    std::cout << "No route found" << std::endl;
+    std::clog << "No route found" << std::endl;
+    if (chdir((client.server->root_directory + client.server->page_directory).c_str()) == -1) {
+      std::cerr << "Page directory not accessible:" << client.server->page_directory << std::endl;
+      return (false);
+    }
   }
 
   struct stat stats;
@@ -37,15 +43,13 @@ bool get_response(Client& client, std::string& request, std::string& response) {
     response_builder(response, 404);
   }
   else {
-
     std::string header;
-    if (request_file == "www/01-pages/favicon.ico") {
+    if (request_file.find(".ico") != std::string::npos || request_file.find(".png") != std::string::npos) {
       generate_header(header, 2001);
     }
     else
       generate_header(header, 200);
 
-    std::cout << request_file << std::endl;
     std::ifstream	infile(request_file);
     response = std::string((std::istreambuf_iterator<char>(infile)), std::istreambuf_iterator<char>());
     response = header + std::to_string(response.size()) + "\r\n\r\n" + response;

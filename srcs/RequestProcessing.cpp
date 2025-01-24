@@ -14,9 +14,6 @@ int set_root_dir(Client& client) {
   return (chdir(client.server->root_directory.c_str()));
 }
 
-
-
-
 void process_request(Client& client) {
 
   set_type(client);
@@ -30,7 +27,6 @@ void process_request(Client& client) {
     std::clog << "Couldn't set root directory" << std::endl;
     client.waitlist[0].type = INVALID;
   }
-
 
   switch (client.waitlist[0].type)
   {

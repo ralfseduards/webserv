@@ -17,6 +17,12 @@ void post_response(Client& client) {
   client.request.erase(0, client.waitlist[0].content_length);
   client.status = OK;
 
+  if (chdir((client.server->root_directory + client.server->post_directory).c_str()) == -1) {
+    std::cerr << "Page directory not accessible:" << client.server->post_directory << std::endl;
+    client.status = ERROR;
+    return ;
+  }
+
   if (client.waitlist[0].header_map.at("Content-Type").find("multipart") == 0) {
     post_request_part_handler(client.waitlist[0]);
   } else {

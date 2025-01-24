@@ -29,7 +29,7 @@ int receive_request(pollfd& client_socket, Client& client) {
     return (DISCONNECTED);
   }
   else if (bytes_received < 0) {
-    std::cout << "bytes received smaller 0" << std::endl;
+    std::cerr << "bytes received smaller 0" << std::endl;
     client.status = ERROR;
     return (ERROR);
   }

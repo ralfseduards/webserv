@@ -45,6 +45,14 @@ enum client_status {
   BAD_METHOD
 };
 
+enum methods {
+  GET     = 1,
+  POST    = 2,
+  DELETE  = 4,
+  HEAD    = 8,
+  INVALID = 16
+
+};
 
 enum port {
   MAX_CLIENTS = 100,
@@ -52,11 +60,6 @@ enum port {
   MAX_REQUEST_SIZE = 10000 * 8000
 };
 
-#define GET     1   // bit 0
-#define POST    2   // bit 1
-#define DELETE  4   // bit 2
-#define HEAD    8   // bit 3
-#define INVALID 16  // bit 4
 
 void signal_handler(int sig);
 void close_fds(std::vector<pollfd>& fd_vec);
@@ -82,7 +85,8 @@ bool validate_header_value(std::string& value);
 bool check_redirection(std::string& request_file);
 
 
-bool get_response(std::string& request, std::string& response);
+void set_type(Client& client);
+bool get_response(Client& client, std::string& request, std::string& response);
 void delete_response(Client& client);
 void post_response(Client& client);
 int post_request_header_parser(Client& client);

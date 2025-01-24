@@ -76,9 +76,6 @@ int main(void) {
 
       // Message
       if (fd_vec[i].revents & POLLIN && i >= server_map.size()) {
-        if (chdir(client_map.at(fd_vec[i].fd).server->root_directory.c_str()) == -1) // TODO: move this
-          break;
-
         incoming_message(fd_vec, client_map, i);
 
         if (client_map.at(fd_vec[i].fd).status != OK && client_map.at(fd_vec[i].fd).status != RECEIVING) {  // Check client status

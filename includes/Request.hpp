@@ -12,7 +12,6 @@ struct Request {
   std::string body;
   std::string response;
   std::map<std::string, std::string> header_map;
-
 };
 
 

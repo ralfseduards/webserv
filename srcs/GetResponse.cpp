@@ -1,19 +1,35 @@
 #include "../includes/webserv.hpp"
 
-bool get_response(std::string& request, std::string& response) {
+bool check_redirection(Client& client, std::string& request_file, std::string& response) {
+  if (client.server->redirection_table.find(request_file) != client.server->redirection_table.end()) {
+    response = client.server->redirection_table.at(request_file);
+    return (true);
+  }
+  return (false);
+}
+
+bool set_route(Client& client, std::string& request_file) {
+  if (client.server->routing_table.find(request_file) != client.server->routing_table.end()) {
+    request_file = client.server->routing_table.at(request_file);
+    return (true);
+  }
+  return (false);
+}
+
+bool get_response(Client& client, std::string& request, std::string& response) {
 
   std::string request_file(request.begin() + 5, std::find(request.begin() + 5, request.end(), ' '));
-  if (request_file.empty()) {
-    request_file = "www/01-pages/index.html";
+
+  std::cout << request_file << std::endl;
+
+  if (check_redirection(client, request_file, response) == true) {
+    response_builder(response, 301);
+    return (true);
   }
-  else if (request_file == "favicon.ico") {
-    request_file = "www/01-pages/favicon.ico";
+
+  if (set_route(client, request_file) == false) {
+    std::cout << "No route found" << std::endl;
   }
-  // if (check_redirection(request_file) == true) {
-  //   response = "http://127.0.0.1:8080/index.html";
-  //   response_builder(response, 301);
-  //   return true;
-  // }
 
   struct stat stats;
   stat(request_file.c_str(), &stats);
@@ -34,11 +50,5 @@ bool get_response(std::string& request, std::string& response) {
     response = std::string((std::istreambuf_iterator<char>(infile)), std::istreambuf_iterator<char>());
     response = header + std::to_string(response.size()) + "\r\n\r\n" + response;
   }
-  return (false);
-}
-
-bool check_redirection(std::string& request_file) {
-  if (request_file.empty())
-    return (true);
   return (false);
 }

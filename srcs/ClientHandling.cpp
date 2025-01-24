@@ -60,6 +60,10 @@ void client_error_message(size_t i, int fd, int status) {
     std::clog << "Client " << i << "\nFD: " << fd << "\nAction: Hung up" << std::endl;
     break;
 
+  case CLOSE:
+    std::clog << "Client " << i << "\nFD: " << fd << "\nAction: Server closed connection" << std::endl;
+    break;
+
   case POLLINVALID:
     std::clog << "Client " << i << "\nFD: " << fd << "\nAction: Invalid" << std::endl;
     break;
@@ -87,7 +91,7 @@ void client_error_message(size_t i, int fd, int status) {
     break;
 
   default:
-    std::cerr << "Unknown Error status on " << i << "with fd " << fd << "\nError: " << status << std::endl;
+    std::cerr << "Unknown Error status on " << i << " with fd " << fd << "\nError: " << status << std::endl;
     break;
   }
 }

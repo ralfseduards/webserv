@@ -75,11 +75,6 @@ int receive_request(pollfd& client_socket, Client& client) {
   return (0);
 }
 
-// int header_map_validation(std::map<std::string, std::string>& header_map) {
-
-// }
-
-
 void set_type(Client& client) {
 
   size_t prefix_len = client.waitlist[0].start_line.find(' ');
@@ -88,7 +83,6 @@ void set_type(Client& client) {
     client.waitlist[0].type = INVALID;
     return ;
   }
-
   std::string temp = client.waitlist[0].start_line.substr(0, prefix_len);
   if (temp == "GET")
     client.waitlist[0].type = GET;
@@ -103,55 +97,6 @@ void set_type(Client& client) {
     std::clog << "Unexpected request: " << temp << std::endl;
   }
 }
-
-void process_request(Client& client) {
-
-  set_type(client);
-
-  if ((client.server->methods & client.waitlist[0].type) == 0) {
-    std::clog << "Not implemented method: " << client.waitlist[0].type << std::endl;
-    client.waitlist[0].type = INVALID;
-  }
-
-  switch (client.waitlist[0].type)
-  {
-  case GET:
-
-    if (get_response(client.waitlist[0].start_line, client.waitlist[0].response) == true)
-      client.status = CLOSE;
-    break;
-
-  case POST:
-    //TODO: remove stoi
-    client.waitlist[0].content_length = std::stoi(client.waitlist[0].header_map.at("Content-Length"));
-    post_response(client);
-    if (client.status == RECEIVING)
-      return ;
-    break;
-
-  case DELETE:
-    // delete_response(client);
-    break;
-
-  case HEAD:
-    break;
-
-  case INVALID:
-    response_builder(client.waitlist[0].response, 501);
-    break;
-
-  default:
-    response_builder(client.waitlist[0].response, 501);
-    break;
-  }
-
-  std::clog << "///////////////////////////////\n" << "client.fd: " << client.fd << "\nResponse:\n" << client.waitlist[0].response << std::endl;
-  //send the response and delete all temp data
-  send(client.fd, client.waitlist[0].response.c_str(), client.waitlist[0].response.length(), 0);
-  // if (client.waitlist[0].response.find("png") == std::string::npos)
-  client.waitlist.erase(client.waitlist.begin());
-}
-
 
 int read_header(std::string header, Request& new_request) {
 

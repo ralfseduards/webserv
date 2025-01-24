@@ -39,6 +39,16 @@ int createServers(std::vector<pollfd>& fd_vec, std::map<int, Server>& server_map
   new_server.server_socket = getSocket(fd_vec, 8080);
   new_server.server_name = "HARDCODED SERVER";
   new_server.root_directory = "/home/tsurma/Documents/common_core/webserv";
+  new_server.routing_table = {
+    {"favicon.ico", "www/01-pages/favicon.ico"},
+    {"", "www/01-pages/index.html"},
+    {"multipart", "www/01-pages/message.html"}
+  };
+  new_server.redirection_table = {
+    {"google", "http://google.com"}
+  };
+
+
 
   if (new_server.server_socket == -1) {
     std::cerr << "Error in server creation" << std::endl;
@@ -54,7 +64,8 @@ int createServers(std::vector<pollfd>& fd_vec, std::map<int, Server>& server_map
   new_server2.server_socket = getSocket(fd_vec, 8081);
   new_server2.server_name = "HARDCODED SERVER2";
   new_server2.root_directory = "/home/tsurma/Documents/common_core/webserv";
-
+  new_server2.routing_table = new_server.routing_table;
+  new_server2.redirection_table = new_server.redirection_table;
   if (new_server2.server_socket == -1) {
     exit(ERROR); //TODO: elaborate, log, cleanup
   }

@@ -16,6 +16,14 @@ void response_builder(std::string& response, int code) {
     response = "HTTP/1.1 301 Moved Permanently\r\nlocation: " + response + "\r\nConnection: close"+ "\r\n\r\n";
     return;
 
+  case 307:
+    response = "HTTP/1.1 307 Temporary Redirect\r\nlocation: " + response + "\r\nConnection: close"+ "\r\n\r\n";
+    return;
+
+  case 308:
+    response = "HTTP/1.1 307 Permanent Redirect\r\nlocation: " + response + "\r\nConnection: close"+ "\r\n\r\n";
+    return;
+
   case 403:
     infile.open(path + "/" + "403.html");
     break;

@@ -1,15 +1,19 @@
 #include "../includes/webserv.hpp"
 
-void response_builder(std::string& response, int code) {
+void response_builder(Client& client, std::string& response, int code) {
 
-  std::string path("www/01-pages");
+  if (chdir((client.server->root_directory + client.server->page_directory).c_str()) == -1) {
+    std::cerr << "Page directory not accessible:" << client.server->page_directory << std::endl;
+    client.status = ERROR;
+    return ;
+  }
   std::ifstream	infile;
   std::string file;
 
   switch (code)
   {
   case 201:
-    infile.open(path + "/" + "201.html");
+    infile.open("201.html");
     break;
 
   case 301:
@@ -25,20 +29,20 @@ void response_builder(std::string& response, int code) {
     return;
 
   case 403:
-    infile.open(path + "/" + "403.html");
+    infile.open("403.html");
     break;
 
   case 404:
-    infile.open(path + "/" + "404.html");
+    infile.open("404.html");
     break;
 
   case 501:
-    infile.open(path + "/" + "501.html");
+    infile.open("501.html");
     break;
 
   default:
-    infile.open(path + "/" + "500.html");
-    return;
+    infile.open("500.html");
+    break;
   }
 
   if (!infile.is_open()) {

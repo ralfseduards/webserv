@@ -25,7 +25,7 @@ bool get_response(Client& client, std::string& request, std::string& response) {
   std::string request_file(request.begin() + 5, std::find(request.begin() + 5, request.end(), ' '));
 
   if (check_redirection(client, request_file, response) == true) {
-    response_builder(response, 301);
+    response_builder(client, response, 301);
     return (true);
   }
 
@@ -40,7 +40,7 @@ bool get_response(Client& client, std::string& request, std::string& response) {
   struct stat stats;
   stat(request_file.c_str(), &stats);
   if (S_ISDIR(stats.st_mode) || access(request_file.c_str(), R_OK) == -1) {
-    response_builder(response, 404);
+    response_builder(client, response, 404);
   }
   else {
     std::string header;

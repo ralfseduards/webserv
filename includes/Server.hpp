@@ -14,7 +14,6 @@ struct Server
   std::string       post_directory;
   std::map<std::string, std::string> routing_table;
   std::map<std::string, std::string> redirection_table;
-
 };
 
 

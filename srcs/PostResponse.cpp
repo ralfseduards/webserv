@@ -29,13 +29,13 @@ void post_response(Client& client) {
     post_request_simple_handler(client.waitlist[0]);
   }
 
-  response_builder(client.waitlist[0].response, 201);
+  response_builder(client, client.waitlist[0].response, 201);
   client.status = OK;
 }
 
 int post_request_simple_handler(Request& request) {
 
-  std::ofstream outfile("www/02-received/Outfile");
+  std::ofstream outfile("Outfile");
   outfile << request.body;
   outfile.close();
   return (0);
@@ -68,7 +68,11 @@ int post_request_part_handler(Request& request) {
 
     body_end = request.body.find(boundary, begin);
 
-    std::ofstream outfile("www/02-received/" + filename, std::ios::out | std::ios::binary);
+    std::ofstream outfile(filename, std::ios::out | std::ios::binary);
+    if (!outfile.is_open()) {
+      std::cerr << "Can't produce outfile" << std::endl;
+      return (1);
+    }
     outfile << request.body.substr(end, body_end - end - 2);
     outfile.close();
     request.body.erase(request.body.begin(), request.body.begin() + body_end);

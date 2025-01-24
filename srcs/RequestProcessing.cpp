@@ -6,10 +6,6 @@ int check_method_server(Client& client) {
   return (OK);
 }
 
-// int check_method_route() {
-
-// }
-
 int set_root_dir(Client& client) {
   return (chdir(client.server->root_directory.c_str()));
 }
@@ -38,6 +34,10 @@ void process_request(Client& client) {
   case POST:
     //TODO: remove stoi
     client.waitlist[0].content_length = std::stoi(client.waitlist[0].header_map.at("Content-Length"));
+    if (client.waitlist[0].content_length > client.server->max_body_size) {
+      client.status = BODY_TOO_LARGE;
+      return ;
+    }
     post_response(client);
     if (client.status == RECEIVING)
       return ;
@@ -51,11 +51,11 @@ void process_request(Client& client) {
     break;
 
   case INVALID:
-    response_builder(client.waitlist[0].response, 501);
+    response_builder(client, client.waitlist[0].response, 501);
     break;
 
   default:
-    response_builder(client.waitlist[0].response, 501);
+    response_builder(client, client.waitlist[0].response, 501);
     break;
   }
 

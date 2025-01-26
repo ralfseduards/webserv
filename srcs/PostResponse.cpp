@@ -12,13 +12,6 @@ void post_response(Client& client) {
     return;
   }
 
-  // CGI:
-
-  {
-    std::cout << client.request << std::endl;
-    exit(0);
-  }
-
   // Extract the body from the request string
   client.waitlist[0].body = client.request.substr(0, client.waitlist[0].content_length);
   client.request.erase(0, client.waitlist[0].content_length);

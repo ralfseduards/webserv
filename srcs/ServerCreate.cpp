@@ -1,5 +1,6 @@
 #include "../includes/webserv.hpp"
 
+# define TEMP_HOME "/home/tom/Desktop/code/school/webserv"
 
 int getSocket(std::vector<pollfd>& fd_vec, int port) {
   struct sockaddr_in addr;
@@ -38,7 +39,7 @@ int createServers(std::vector<pollfd>& fd_vec, std::map<int, Server>& server_map
   new_server.max_body_size = MAX_REQUEST_SIZE;
   new_server.server_socket = getSocket(fd_vec, 8080);
   new_server.server_name = "HARDCODED SERVER";
-  new_server.root_directory = "/home/tsurma/Documents/common_core/webserv";
+  new_server.root_directory = TEMP_HOME;
   new_server.page_directory = "/www/01-pages";
   new_server.post_directory = "/www/02-received";
   new_server.routing_table = {

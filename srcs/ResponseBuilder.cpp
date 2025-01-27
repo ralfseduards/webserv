@@ -2,7 +2,7 @@
 
 void response_builder(Client& client, std::string& response, int code) {
 
-  if (chdir((client.server->root_directory + client.server->page_directory).c_str()) == -1) {
+  if (chdir((client.server->root_directory + "/" + client.server->page_directory).c_str()) == -1) {
     std::cerr << "Page directory not accessible:" << client.server->page_directory << std::endl;
     client.status = ERROR;
     return ;
@@ -13,8 +13,8 @@ void response_builder(Client& client, std::string& response, int code) {
   switch (code)
   {
   case 200:
-    response = "HTTP/1.1 200 OK\r\n\r\n";
-    return;
+    infile.open("200.html");
+    break;
 
   case 201:
     infile.open("201.html");
@@ -25,15 +25,15 @@ void response_builder(Client& client, std::string& response, int code) {
     return;
 
   case 301:
-    response = "HTTP/1.1 301 Moved Permanently\r\nlocation: " + response + "\r\nConnection: close"+ "\r\n\r\n";
+    response = "HTTP/1.1 301 Moved Permanently\r\nlocation: " + response + "\r\nConnection: close" + "\r\n\r\n";
     return;
 
   case 307:
-    response = "HTTP/1.1 307 Temporary Redirect\r\nlocation: " + response + "\r\nConnection: close"+ "\r\n\r\n";
+    response = "HTTP/1.1 307 Temporary Redirect\r\nlocation: " + response + "\r\nConnection: close" + "\r\n\r\n";
     return;
 
   case 308:
-    response = "HTTP/1.1 307 Permanent Redirect\r\nlocation: " + response + "\r\nConnection: close"+ "\r\n\r\n";
+    response = "HTTP/1.1 307 Permanent Redirect\r\nlocation: " + response + "\r\nConnection: close" + "\r\n\r\n";
     return;
 
   case 403:

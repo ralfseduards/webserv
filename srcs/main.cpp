@@ -76,7 +76,7 @@ int main(void) {
 
       // Message
       if (fd_vec[i].revents & POLLIN && i >= server_map.size()) {
-        incoming_message(fd_vec, client_map, i);
+        incoming_message(fd_vec[i], client_map.at(fd_vec[i].fd));
 
         if (client_map.at(fd_vec[i].fd).status != OK && client_map.at(fd_vec[i].fd).status != RECEIVING) {  // Check client status
           client_purge(i, fd_vec, client_map, client_map.at(fd_vec[i].fd).status);

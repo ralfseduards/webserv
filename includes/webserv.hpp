@@ -76,15 +76,18 @@ void client_add_map(std::map<int, Client>& client_map, int fd, Server* server);
 void client_error_message(size_t i, int fd, int status);
 void client_remove(size_t& i, std::map<int, Client>& client_map, std::vector<pollfd>& fd_vec);
 
-int incoming_message(std::vector<pollfd>& fd_vec, std::map<int, Client>& client_map, std::size_t& i);
+int incoming_message(pollfd& pollClient, Client& client);
+bool new_request(Client& client);
+bool search_header(Client& client);
+
 int receive_request(pollfd& client_socket, Client& client);
 void process_request(Client& client);
-int read_header(std::string header, Request& new_request);
+int parse_header(std::string header, Request& new_request);
 bool validate_header_key(std::string& key);
 bool validate_header_value(std::string& value);
-
-void set_type(Client& client);
-bool get_response(Client& client, std::string& request, std::string& response);
+int set_request_path(Request& request);
+void set_type(Request& request);
+bool get_response(Client& client, Request& request);
 void delete_response(Client& client);
 void post_response(Client& client);
 int post_request_header_parser(Client& client);

@@ -17,7 +17,7 @@ void post_response(Client& client) {
   client.request.erase(0, client.waitlist[0].content_length);
   client.status = OK;
 
-  if (chdir((client.server->root_directory + client.server->post_directory).c_str()) == -1) {
+  if (chdir((client.server->root_directory + "/" + client.server->post_directory).c_str()) == -1) {
     std::cerr << "Page directory not accessible:" << client.server->post_directory << std::endl;
     client.status = ERROR;
     return ;

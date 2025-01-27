@@ -39,20 +39,20 @@ int createServers(std::vector<pollfd>& fd_vec, std::map<int, Server>& server_map
   new_server.server_socket = getSocket(fd_vec, 8080);
   new_server.server_name = "HARDCODED SERVER";
   new_server.root_directory = "/home/tsurma/Documents/common_core/webserv";
-  new_server.page_directory = "/www/01-pages";
-  new_server.post_directory = "/www/02-received";
+  new_server.page_directory = "www/01-pages";
+  new_server.post_directory = "www/02-received";
 
   new_server.directories = {
-    {"/www/01-pages", (GET)},
-    {"/www/02-received", (GET | POST | DELETE)},
-    {"/www/03-stash", (GET | POST)}
+    {"www/01-pages", (GET)},
+    {"www/02-received", (GET | POST | DELETE)},
+    {"www/03-stash", (GET | POST)}
   };
 
 
   new_server.routing_table = {
     // {"favicon.ico", "www/01-pages/favicon.ico"},
-    {"", "www/01-pages/index.html"},
-    {"multipart", "www/01-pages/message.html"}
+    {"/",          "www/01-pages/index.html"},
+    {"/multipart", "www/01-pages/message.html"}
   };
   new_server.redirection_table = {
     {"google", "http://google.com"}

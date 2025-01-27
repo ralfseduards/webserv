@@ -12,6 +12,7 @@ int main(int argc, char **argv)
   char *custom_envp[] = {
     "HOME=/home/tom/Desktop/code/school/webserv/cgi-bin",
     "TEST=true",
+    "PATH=/home/tom/Desktop/code/school/webserv/cgi-bin",
     NULL
   };
 

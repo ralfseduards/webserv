@@ -1,7 +1,7 @@
 #include "../includes/webserv.hpp"
 
 #ifndef CGI_DIR
-# define CGI_DIR cgi-dir
+# define CGI_DIR "cgi-dir"
 #endif
 
 // default cgi directory: cgi-dir
@@ -9,11 +9,17 @@
 
 // TODO: make it configurable in the parser
 
-// TODO: implement python extension
-// how to check for interpreters?
-//  1. check with the file extension
-//  2. if no file extension just run and hope for a shebang
-//  -- maybe check mime types ??
+//  >>>>>>>>>>>>>>>> the cgi logic: <<<<<<<<<<<<<<<<
+// 1. construct the environment
+//    1. copy the real one
+//    2. add the http header parsed as environ variables
+//    3. add the required ones by the standard
+// 2. pipe, fork, execve
+//    1. write into stdin the message body of the http request
+//    2. stdout is the response from the script
+// 3. wait (maybe some no-hang/timeout logic)
+// 4. parse the stdout of the script and make a http response
+
 
 // TODO: POST requests
 // TODO: GET requests
@@ -23,8 +29,6 @@
 
 // package the contents of the request in a format:
 // fieldname=value&fieldname1=value, like a QUERY_STRING
-
-// i need the request.
 
 // GET /cgi-bin/simple HTTP/1.1
 // Host: localhost:8080
@@ -41,9 +45,10 @@
 // Sec-Fetch-User: ?1
 // Priority: u=0, i
 
-int cgi_parse(void)
+int cgi_parse(Client& client)
 {
-  std::string request;
+
+  // chdir to cgi-bin for relative scripts 
 
 
   return (0);

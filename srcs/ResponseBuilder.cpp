@@ -12,9 +12,17 @@ void response_builder(Client& client, std::string& response, int code) {
 
   switch (code)
   {
+  case 200:
+    response = "HTTP/1.1 200 OK\r\n\r\n";
+    return;
+
   case 201:
     infile.open("201.html");
     break;
+
+  case 204:
+    response = "HTTP/1.1 204 No Content\r\n\r\n";
+    return;
 
   case 301:
     response = "HTTP/1.1 301 Moved Permanently\r\nlocation: " + response + "\r\nConnection: close"+ "\r\n\r\n";

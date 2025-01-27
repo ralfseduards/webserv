@@ -10,7 +10,8 @@ SRC =	srcs/main.cpp\
 			srcs/GetResponse.cpp\
 			srcs/PostResponse.cpp\
 			srcs/ResponseBuilder.cpp\
-			srcs/RequestProcessing.cpp
+			srcs/RequestProcessing.cpp\
+			srcs/DeleteResponse.cpp
 
 OBJ = $(SRC:.cpp=.o)
 

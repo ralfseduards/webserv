@@ -3,14 +3,20 @@
 #include "../includes/Request.hpp"
 
 int incoming_message(std::vector<pollfd>& fd_vec, std::map<int, Client>& client_map, std::size_t& i) {
+
   (void)receive_request(fd_vec[i], client_map[fd_vec[i].fd]); //return value voided for clarity, new method uses state in struct
+
+
+
   if (client_map[fd_vec[i].fd].status != OK && client_map[fd_vec[i].fd].status != RECEIVING)
     return (1);
+
   else if (client_map[fd_vec[i].fd].waitlist.size() > 0)
     process_request(client_map[fd_vec[i].fd]);
   return (0);
 }
 
+// Writes the system buffer into client request string and checks for recv error
 int receive_request(pollfd& client_socket, Client& client) {
 
   ssize_t bytes_received;

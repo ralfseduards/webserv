@@ -12,6 +12,7 @@ struct Server
   std::string       root_directory;
   std::string       page_directory;
   std::string       post_directory;
+  std::map<std::string, unsigned char> directories;
   std::map<std::string, std::string> routing_table;
   std::map<std::string, std::string> redirection_table;
 };

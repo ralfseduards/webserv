@@ -60,7 +60,7 @@ static char* cpp_strdup(std::string str)
 
   for (std::string::iterator it = str.begin(); it <= str.end(); ++it)
     newStr[i++] = *it;
-  newStr[i] = '\0';
+  newStr[str.size()] = '\0';
   return (newStr);
 }
 
@@ -94,6 +94,9 @@ static std::string find_path(const char **envp)
   return(check_str);
 }
 
+/* Extracts REQUEST_METHOD, SCRIPT_NAME and QUERY_STRING from the frist
+ * line of the http request. Sets them as customenvp[2,3,4]
+*/
 static void parse_first_line(const std::string& line, char **&custom_envp)
 {
   std::size_t start = 0, end;
@@ -123,12 +126,47 @@ static void parse_first_line(const std::string& line, char **&custom_envp)
   }
 }
 
+static std::string find_value(const std::vector<std::string>& tokenVec, const std::string to_find)
+{
+  for (std::vector<std::string>::const_iterator it = tokenVec.begin(); it < tokenVec.end(); ++it)
+    if ((*it).substr(0, to_find.size()) == to_find)
+      return ((*it).substr(to_find.size() + 1));    // skip the space
+  return ("");
+}
+
 static void create_new_envp(const std::vector<std::string>& tokenVec, char **&custom_envp, const char **envp)
 {
   custom_envp[0] = cpp_strdup(find_path(envp));   // PATH
   custom_envp[1] = cpp_strdup("DOCUMENT_ROOT=");   // TODO: get from Server
   parse_first_line(tokenVec[0], custom_envp);
+  custom_envp[5] = cpp_strdup("CONTENT_TYPE=" + find_value(tokenVec, "Content-Type:"));
+  custom_envp[6] = cpp_strdup("CONTENT_LENGHT=" + find_value(tokenVec, "Content-Lenght:"));
+  custom_envp[7] = cpp_strdup("HTTP_USER_AGENT=" + find_value(tokenVec, "User-Agent:"));
+  custom_envp[8] = cpp_strdup("HTTP_HOST=" + find_value(tokenVec, "Host:"));
+  custom_envp[9] = cpp_strdup("HTTP_REFERRER=" + find_value(tokenVec, "Referrer:"));
+  custom_envp[10] = NULL;
 }
+
+// POST /upload HTTP/1.1
+// Host: localhost:8080
+// User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0
+// Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/png,image/svg+xml,*/*;q=0.8
+// Accept-Language: en-US,en;q=0.5
+// Accept-Encoding: gzip, deflate, br, zstd
+// Referer: http://localhost:8080/multipart
+// Content-Type: multipart/form-data; boundary=---------------------------208632599338289462881885670814
+// Content-Length: 637
+// Origin: http://localhost:8080
+// Sec-GPC: 1
+// Connection: keep-alive
+// Upgrade-Insecure-Requests: 1
+// Sec-Fetch-Dest: document
+// Sec-Fetch-Mode: navigate
+// Sec-Fetch-Site: same-origin
+// Sec-Fetch-User: ?1
+// Priority: u=0, i
+
+
 
 int cgi_parse(const char **envp)
 {
@@ -148,8 +186,8 @@ int cgi_parse(const char **envp)
     "Sec-Fetch-User: ?1\n"
     "Priority: u=0, i\n";
 
-  std::vector<std::string>  tokenVec = tokenize_request(request);
-  char  **custom_envp = new char *[ENVP_SIZE + 1]();       // hardcoded, because thats how many i choose to handle
+  std::vector<std::string> tokenVec = tokenize_request(request);
+  char  **custom_envp = new char *[ENVP_SIZE + 1];       // hardcoded, because thats how many i choose to handle
   pid_t pid;
   int   pipefd[2];
   char *program_name;
@@ -180,12 +218,12 @@ int cgi_parse(const char **envp)
   // construct server response form pipep[0]
 
 
-  for (int i = 0; custom_envp[i] != NULL && i < ENVP_SIZE + 1; ++i)
+  for (int i = 0; i < ENVP_SIZE + 1; ++i)
   {
     std::cout << custom_envp[i] << '\n';
     delete[] custom_envp[i];
   }
-
+  delete[] custom_envp;
   return (0);
 }
 

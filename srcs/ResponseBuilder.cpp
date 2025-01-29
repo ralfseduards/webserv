@@ -1,132 +1,24 @@
 #include "../includes/webserv.hpp"
 
-void response_builder(Client& client, std::string& response, int code) {
+// loads the http code default paged into buffer
+void load_http_code_page(Client& client, Response& response) {
 
   if (chdir((client.server->root_directory + "/" + client.server->page_directory).c_str()) == -1) {
     std::cerr << "Page directory not accessible:" << client.server->page_directory << std::endl;
     client.status = ERROR;
     return ;
   }
+
   std::ifstream	infile;
-  std::string file;
 
-  switch (code)
-  {
-  case 200:
-    infile.open("200.html");
-    break;
-
-  case 201:
-    infile.open("201.html");
-    break;
-
-  case 204:
-    response = "HTTP/1.1 204 No Content\r\n\r\n";
-    return;
-
-  case 301:
-    response = "HTTP/1.1 301 Moved Permanently\r\nlocation: " + response + "\r\nConnection: close" + "\r\n\r\n";
-    return;
-
-  case 307:
-    response = "HTTP/1.1 307 Temporary Redirect\r\nlocation: " + response + "\r\nConnection: close" + "\r\n\r\n";
-    return;
-
-  case 308:
-    response = "HTTP/1.1 307 Permanent Redirect\r\nlocation: " + response + "\r\nConnection: close" + "\r\n\r\n";
-    return;
-
-  case 403:
-    infile.open("403.html");
-    break;
-
-  case 404:
-    infile.open("404.html");
-    break;
-
-  case 501:
-    infile.open("501.html");
-    break;
-
-  default:
-    infile.open("500.html");
-    break;
-  }
+  infile.open(std::to_string(response.http_code) + ".html");
 
   if (!infile.is_open()) {
-    file = "<html><body><h1>404 Not Found</h1></body></html>";
-    code = 404;
+    response.file_content = "<html><body><h1>404 Not Found</h1></body></html>";
+    response.http_code = 404;
   }
-  else
-    file = std::string((std::istreambuf_iterator<char>(infile)), std::istreambuf_iterator<char>());
-
-  std::stringstream filesize;
-  std::string name (".html");
-  filesize << file.size();
-  generate_header(response, code, name);
-  response.append(filesize.str());
-  response.append("\r\n\r\n");
-  response.append(file);
+  response.file_content = std::string((std::istreambuf_iterator<char>(infile)), std::istreambuf_iterator<char>());
 }
-
-void generate_header(std::string& header, std::size_t code, std::string& filepath) {
-
-  header = "HTTP/1.1 ";
-  switch (code)
-  {
-  case 200:
-    header.append("200 OK");
-    break;
-
-  case 201:
-    header.append("201 Created");
-    break;
-
-  case 204:
-    header.append("204 No Content");
-    break;
-
-  case 301:
-    header.append("301 Moved Permanently");
-    break;
-
-  case 400:
-    header.append("400 Bad Request");
-    break;
-
-  case 404:
-    header.append("404 Not Found");
-    break;
-
-  case 403:
-    header.append("403 Forbidden");
-    break;
-
-  case 413:
-    header.append("413 Content Too Large");
-    break;
-
-  case 500:
-    header.append("500 Internal Server Error");
-    break;
-
-  case 501:
-    header.append("501 Not Implemented");
-    break;
-
-  case 505:
-    header.append("505 HTTP Version Not Supported");
-    break;
-
-  default:
-    header.append("500 Internal Server Error");
-    std::clog << "Error in header generation unknown case" << std::endl;
-    break;
-  }
-
-  header.append("\r\nContent-Type: " + getMimeType(filepath) + "\r\nContent-Length: ");
-}
-
 
 std::string getMimeType(const std::string &filename) {
 
@@ -153,4 +45,87 @@ std::string getMimeType(const std::string &filename) {
     }
   }
   return "application/octet-stream";
+}
+
+
+void http_response(Client& client, Response& response) {
+
+  response.code_string = return_http_code(response.http_code);
+  if (response.http_code == 301 || response.http_code == 302 || response.http_code == 307 || response.http_code == 308) {
+    redirection_response(response);
+    return ;
+  }
+  if (response.has_content == false) {
+    load_http_code_page(client, response);
+  }
+
+
+  response.content_type = getMimeType(client.waitlist[0].request_path);
+  content_response(response);
+}
+
+void redirection_response (Response& response) {
+  response.content = http_version;
+  response.content.append(" ");
+  response.content.append(response.code_string);
+  response.content.append(newline);
+  response.content.append("Location: ");
+  response.content.append(response.redirection_URL);
+  response.content.append(newline);
+  response.content.append("Connection: close");
+  response.content.append(newline);
+  response.content.append(newline);
+}
+
+void content_response(Response& response) {
+
+  response.content = http_version;
+  response.content.append(" ");
+  response.content.append(response.code_string);
+  response.content.append(newline);
+  response.content.append("Content-Type: ");
+  response.content.append(response.content_type);
+  response.content.append(newline);
+  response.content.append("Content-Length: ");
+  response.content.append(std::to_string(response.file_content.length()));
+  response.content.append(newline);
+  response.content.append(newline);
+  response.content.append(response.file_content);
+  response.content.append(newline);
+  response.content.append(newline);
+}
+
+std::string return_http_code(int code) {
+  switch (code)
+  {
+  case 200:
+    return ("200 OK");
+  case 201:
+    return ("201 Created");
+  case 204:
+    return ("204 No Content");
+  case 301:
+    return ("301 Moved Permanently");
+  case 307:
+    return ("307 Temporary Redirect");
+  case 308:
+    return ("308 Permanent Redirect");
+  case 400:
+    return ("400 Bad Request");
+  case 403:
+    return ("403 Forbidden");
+  case 404:
+    return ("404 Not Found");
+  case 413:
+    return ("413 Content Too Large");
+  case 500:
+    return ("500 Internal Server Error");
+  case 501:
+    return ("501 Not Implemented");
+  case 505:
+    return ("505 HTTP Version Not Supported");
+
+  default:
+    return ("404 Not Found");
+  }
 }

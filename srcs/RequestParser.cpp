@@ -15,7 +15,7 @@ int incoming_message(pollfd& client_socket, Client& client) {
     post_response(client);
     if (client.status == RECEIVING)
       return (OK);
-    send(client.fd, client.waitlist[0].response.c_str(), client.waitlist[0].response.length(), 0);
+    send(client.fd, client.waitlist[0].response.content.c_str(), client.waitlist[0].response.content.length(), 0);
     client.waitlist.erase(client.waitlist.begin());
     client.status = OK;
     return (OK);

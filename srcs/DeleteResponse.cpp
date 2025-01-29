@@ -8,12 +8,16 @@ void delete_response(Client& client) {
 
   if (!file) {
     std::cout << "File not found" << std::endl;
-    response_builder(client, client.waitlist[0].response, 204);
+    client.waitlist[0].response.http_code = 204;
+    client.waitlist[0].response.has_content = false;
+    http_response(client, client.waitlist[0].response);
     return ;
   }
 
   if (std::remove(client.waitlist[0].request_path.c_str()) == 0) {
-    response_builder(client, client.waitlist[0].response, 200);
+    client.waitlist[0].response.http_code = 200;
+    client.waitlist[0].response.has_content = false;
+    http_response(client, client.waitlist[0].response);
   } else {
       //TODO: add http response
       std::perror("Error deleting file");

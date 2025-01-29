@@ -55,7 +55,7 @@ int createServers(std::vector<pollfd>& fd_vec, std::map<int, Server>& server_map
     {"/multipart", "www/01-pages/message.html"}
   };
   new_server.redirection_table = {
-    {"google", "http://google.com"}
+    {"/google", "http://google.com"}
   };
 
 

@@ -29,7 +29,9 @@ void post_response(Client& client) {
     post_request_simple_handler(client.waitlist[0]);
   }
 
-  response_builder(client, client.waitlist[0].response, 201);
+  client.waitlist[0].response.http_code = 201;
+  client.waitlist[0].response.has_content = false;
+  http_response(client, client.waitlist[0].response);
   client.status = OK;
 }
 
@@ -59,7 +61,6 @@ int post_request_part_handler(Request& request) {
     end = request.body.find("\r\n\r\n", begin) + 2 * rn.length(); //begin of content
 
     subheader = request.body.substr(begin, end - 1);
-    // request.body.erase(request.body.begin(), request.body.begin() + end - 1);
 
     filename_pos = subheader.find("filename=") + 9;
     filename_end = subheader.find('"', filename_pos + 1);

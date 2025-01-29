@@ -1,8 +1,10 @@
 #include "../includes/webserv.hpp"
 
-bool check_redirection(Client& client, std::string& request_file, std::string& response) {
+bool check_redirection(Client& client, std::string& request_file, Response& response) {
   if (client.server->redirection_table.find(request_file) != client.server->redirection_table.end()) {
-    response = client.server->redirection_table.at(request_file);
+    response.redirection_URL = client.server->redirection_table.at(request_file);
+    response.was_redirected = true;
+    response.http_code = 301;
     return (true);
   }
   return (false);
@@ -34,11 +36,6 @@ int check_method_server(Client& client) {
   return (OK);
 }
 
-// int check_method_route(Client& client) {
-
-//   if (client.server->directories.count(client.waitlist[0].request_path))
-// }
-
 int set_root_dir(Client& client) {
   return (chdir(client.server->root_directory.c_str()));
 }
@@ -56,11 +53,13 @@ void process_request(Client& client) {
   }
 
   if (check_redirection(client, client.waitlist[0].request_path, client.waitlist[0].response) == true) {
-    response_builder(client, client.waitlist[0].response, 301);
+    client.waitlist[0].response.http_code = 301;
+    http_response(client, client.waitlist[0].response);
+    send_response(client, client.waitlist[0].response);
+    client.status = CLOSE;
     return ;
   }
 
-  std::cout << client.waitlist[0].request_path << std::endl;
 
   // Replaces the request path with the one in the routing table
   if (set_route(client, client.waitlist[0].request_path) == false) {
@@ -103,17 +102,24 @@ void process_request(Client& client) {
     break;
 
   case INVALID:
-    response_builder(client, client.waitlist[0].response, 501);
+    client.waitlist[0].response.http_code = 501;
+    client.waitlist[0].response.has_content = false;
+    http_response(client, client.waitlist[0].response);
     break;
 
   default:
-    response_builder(client, client.waitlist[0].response, 501);
+    client.waitlist[0].response.http_code = 501;
+    client.waitlist[0].response.has_content = false;
+    http_response(client, client.waitlist[0].response);
     break;
   }
+  send_response(client, client.waitlist[0].response);
+}
 
-  std::clog << "///////////////////////////////\n" << "client.fd: " << client.fd << "\nResponse:\n" << client.waitlist[0].response << std::endl;
+
+void send_response(Client& client, Response& response) {
+  std::clog << "///////////////////////////////\n" << "client.fd: " << client.fd << "\nResponse:\n" << client.waitlist[0].response.content << std::endl;
   //send the response and delete all temp data
-  send(client.fd, client.waitlist[0].response.c_str(), client.waitlist[0].response.length(), 0);
-  // if (client.waitlist[0].response.find("png") == std::string::npos)
+  send(client.fd, response.content.c_str(), response.content.length(), 0);
   client.waitlist.erase(client.waitlist.begin());
 }

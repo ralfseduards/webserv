@@ -64,7 +64,9 @@ static char* cpp_strdup(std::string str)
   return (newStr);
 }
 
-/* splits the request string on \n and returns a vector with the lines*/
+/* Splits the request string on \n and returns a vector with the lines.
+ * Returned vector doesnt contain newlines. Uses a string stream.
+*/
 static std::vector<std::string> tokenize_request(const std::string& request)
 {
   std::stringstream         ss(request);
@@ -126,6 +128,10 @@ static void parse_first_line(const std::string& line, char **&custom_envp)
   }
 }
 
+
+/* Searches for a http header field from tokenVec, that starts with *to_find*.
+ * If field is found, returns the value, if not, returns ""
+*/
 static std::string find_value(const std::vector<std::string>& tokenVec, const std::string to_find)
 {
   for (std::vector<std::string>::const_iterator it = tokenVec.begin(); it < tokenVec.end(); ++it)
@@ -134,10 +140,40 @@ static std::string find_value(const std::vector<std::string>& tokenVec, const st
   return ("");
 }
 
+
+/* Takes my custom_envp and finds 2 values: SCRIPT_NAME and DOCUMENT_ROOT and combines
+ * them to make a resulting string of the full absolute path of the executable.
+ * SCRIPT_NAME and DOCUMENT_ROOT should always be available and have values.
+*/
+static void get_program_name(std::string& result, char **custom_envp)
+{
+  std::string script_name;
+  std::string doc_root;
+  std::string token;
+
+  for(int i = 0; custom_envp[i] != NULL; ++i)
+  {
+    if (std::strncmp(custom_envp[i], "SCRIPT_NAME=", 12) == 0)
+    {
+      token = custom_envp[i];
+      script_name = token.substr(13);   // exclude the starting '/'
+    }
+    else if (std::strncmp(custom_envp[i], "DOCUMENT_ROOT=", 14) == 0)
+    {
+      token = custom_envp[i];
+      doc_root = token.substr(14);
+    }
+  }
+  result = doc_root + "www/" + script_name;   //TODO: do i need to add www/ in production??
+}
+
+/* Takes a 'token vector', envp; and fills the custom_envp with values. The logic is a little hardcoded,
+ * taking into account the size of custom_envp and the custom env variable names that we need.
+*/
 static void create_new_envp(const std::vector<std::string>& tokenVec, char **&custom_envp, const char **envp)
 {
   custom_envp[0] = cpp_strdup(find_path(envp));   // PATH
-  custom_envp[1] = cpp_strdup("DOCUMENT_ROOT=");   // TODO: get from Server
+  custom_envp[1] = cpp_strdup("DOCUMENT_ROOT=/home/tom/Desktop/code/school/webserv/");   // TODO: get from Server
   parse_first_line(tokenVec[0], custom_envp);
   custom_envp[5] = cpp_strdup("CONTENT_TYPE=" + find_value(tokenVec, "Content-Type:"));
   custom_envp[6] = cpp_strdup("CONTENT_LENGHT=" + find_value(tokenVec, "Content-Lenght:"));
@@ -146,27 +182,6 @@ static void create_new_envp(const std::vector<std::string>& tokenVec, char **&cu
   custom_envp[9] = cpp_strdup("HTTP_REFERRER=" + find_value(tokenVec, "Referrer:"));
   custom_envp[10] = NULL;
 }
-
-// POST /upload HTTP/1.1
-// Host: localhost:8080
-// User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0
-// Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/png,image/svg+xml,*/*;q=0.8
-// Accept-Language: en-US,en;q=0.5
-// Accept-Encoding: gzip, deflate, br, zstd
-// Referer: http://localhost:8080/multipart
-// Content-Type: multipart/form-data; boundary=---------------------------208632599338289462881885670814
-// Content-Length: 637
-// Origin: http://localhost:8080
-// Sec-GPC: 1
-// Connection: keep-alive
-// Upgrade-Insecure-Requests: 1
-// Sec-Fetch-Dest: document
-// Sec-Fetch-Mode: navigate
-// Sec-Fetch-Site: same-origin
-// Sec-Fetch-User: ?1
-// Priority: u=0, i
-
-
 
 int cgi_parse(const char **envp)
 {
@@ -184,45 +199,56 @@ int cgi_parse(const char **envp)
     "Sec-Fetch-Mode: navigate\n"
     "Sec-Fetch-Site: none\n"
     "Sec-Fetch-User: ?1\n"
-    "Priority: u=0, i\n";
+    "Priority: u=0, i\n"
+    "\n\n\n\n\n"
+    "thisis=data&test=true\n";
 
   std::vector<std::string> tokenVec = tokenize_request(request);
   char  **custom_envp = new char *[ENVP_SIZE + 1];       // hardcoded, because thats how many i choose to handle
-  pid_t pid;
-  int   pipefd[2];
-  char *program_name;
-  char *program_args[2];
-
   create_new_envp(tokenVec, custom_envp, envp);
 
+  pid_t pid;
+  int   pipefd[2];
+  std::string program_name;
+  char *program_args[2];
 
-  /*
+  // TODO: pass the POST body into a read pipe
+
   if (pipe(pipefd) == -1)
-    return(cgi_error("cgi pipe():"));
-  pid = fork()
+    return(cgi_error("cgi pipe1()"));
+  pid = fork();
   if (pid == -1)
-    return (cgi_error("cgi fork():"))
+    return (cgi_error("cgi fork()"));
   else if (pid == 0)
   {
-    // dup2 
-    // put the post content into pipe read end
-    // TODO: do i need 2 pipes?
-    program_args = {program_name, NULL};
-    execve(program_name, program_args, custom_envp);
-    cgi_error("cgi execve():");
+    // close read end
+    close(pipefd[0]);
+    dup2(pipefd[1], 1);
+    close(pipefd[1]);
+    get_program_name(program_name, custom_envp);
+    program_args[0] = const_cast<char *>(program_name.c_str());
+    program_args[1] = NULL;
+    execve(program_name.c_str(), program_args, custom_envp);
+    cgi_error("cgi execve()");
     exit(1);
   }
-  */ 
-  // wait();
-  // have a timeout
-  // construct server response form pipep[0]
+  waitpid(pid, NULL, 0);    // TODO: have a timeout
 
+
+  // ------------ TEST ---------------
+  // close write end
+  close(pipefd[1]);
+  char read_buffer[256];
+
+  // the pipe will not be open for reading until the child exits.
+  while (read(pipefd[0], read_buffer, 256))
+    std::cout << read_buffer;
+  close(pipefd[0]);
+  // ---------------------------------
+  
 
   for (int i = 0; i < ENVP_SIZE + 1; ++i)
-  {
-    std::cout << custom_envp[i] << '\n';
     delete[] custom_envp[i];
-  }
   delete[] custom_envp;
   return (0);
 }

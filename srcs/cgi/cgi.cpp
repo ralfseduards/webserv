@@ -183,10 +183,33 @@ static void create_new_envp(const std::vector<std::string>& tokenVec, char **&cu
   custom_envp[10] = NULL;
 }
 
+
+static void pass_request_body(std::vector<std::string>& tokenVec, int write_end)
+{
+ 
+  // 1. get the post body from the tokenVec
+  // 2. write it into the write end
+  // 3. close the write end
+
+  std::stringstream ss;
+  bool              append = false;
+  for (int i = 0; i < tokenVec.size(); ++i)
+  {
+    if (append)
+      ss << tokenVec[i];    // TODO: does each of the lines have to end with \r\n?
+    if (tokenVec[i] == "")
+      append = true;
+  }
+  // write into the pipe
+  write(write_end, ss.str().c_str(), ss.str().size());
+  // this will close it for the the parent and the child
+  close(write_end);
+}
+
 int cgi_parse(const char **envp)
 {
   std::string request = 
-    "GET /cgi-bin/simple.py? HTTP/1.1\n"
+    "GET /cgi-bin/a.out HTTP/1.1\n"
     "Host: localhost:8080\n"
     "User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0\n"
     "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/png,image/svg+xml,*/*;q=0.8\n"
@@ -200,7 +223,7 @@ int cgi_parse(const char **envp)
     "Sec-Fetch-Site: none\n"
     "Sec-Fetch-User: ?1\n"
     "Priority: u=0, i\n"
-    "\n\n\n\n\n"
+    "\n"
     "thisis=data&test=true\n";
 
   std::vector<std::string> tokenVec = tokenize_request(request);
@@ -208,43 +231,57 @@ int cgi_parse(const char **envp)
   create_new_envp(tokenVec, custom_envp, envp);
 
   pid_t pid;
-  int   pipefd[2];
+  int   pipefd[2][2];       // pipefd[0] is the input pipe, pipefd[1] is for child output
   std::string program_name;
   char *program_args[2];
 
-  // TODO: pass the POST body into a read pipe
 
-  if (pipe(pipefd) == -1)
+  if (pipe(pipefd[0]) == -1)
     return(cgi_error("cgi pipe1()"));
+  if (pipe(pipefd[1]) == -1)
+    return(cgi_error("cgi pipe1()"));
+
+  // TODO: pass the POST body into a read pipe
+  pass_request_body(tokenVec, pipefd[0][1]);
+
   pid = fork();
   if (pid == -1)
     return (cgi_error("cgi fork()"));
   else if (pid == 0)
   {
+    // set input from parent (write end is already closed before fork)
+    dup2(pipefd[0][0], 0);
+    close(pipefd[0][0]);
+
     // close read end
-    close(pipefd[0]);
-    dup2(pipefd[1], 1);
-    close(pipefd[1]);
+    close(pipefd[1][0]);
+    dup2(pipefd[1][1], 1);
+    close(pipefd[1][1]);
+
     get_program_name(program_name, custom_envp);
     program_args[0] = const_cast<char *>(program_name.c_str());
     program_args[1] = NULL;
+
     execve(program_name.c_str(), program_args, custom_envp);
     cgi_error("cgi execve()");
     exit(1);
   }
+  close(pipefd[0][0]); // close the read end of the read pipe
   waitpid(pid, NULL, 0);    // TODO: have a timeout
 
 
   // ------------ TEST ---------------
   // close write end
-  close(pipefd[1]);
+  close(pipefd[1][1]);
   char read_buffer[256];
 
   // the pipe will not be open for reading until the child exits.
-  while (read(pipefd[0], read_buffer, 256))
-    std::cout << read_buffer;
-  close(pipefd[0]);
-  // ---------------------------------
+  std::cout << "this is what the child said:\n" << std::endl;
+  int bytes_read;
+  while ((bytes_read = read(pipefd[1][0], read_buffer, 256)) > 0)
+    write(1, read_buffer, bytes_read);
+  close(pipefd[1][0]);
+  // --------------------------------
   
 
   for (int i = 0; i < ENVP_SIZE + 1; ++i)

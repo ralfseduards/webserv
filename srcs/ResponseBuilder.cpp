@@ -61,23 +61,20 @@ void response_builder(Client& client, std::string& response, int code) {
     file = std::string((std::istreambuf_iterator<char>(infile)), std::istreambuf_iterator<char>());
 
   std::stringstream filesize;
+  std::string name (".html");
   filesize << file.size();
-  generate_header(response, code);
+  generate_header(response, code, name);
   response.append(filesize.str());
   response.append("\r\n\r\n");
   response.append(file);
 }
 
-void generate_header(std::string& header, std::size_t code) {
+void generate_header(std::string& header, std::size_t code, std::string& filepath) {
 
   header = "HTTP/1.1 ";
   switch (code)
   {
   case 200:
-    header.append("200 OK");
-    break;
-
-  case 2001:
     header.append("200 OK");
     break;
 
@@ -127,8 +124,33 @@ void generate_header(std::string& header, std::size_t code) {
     break;
   }
 
-  if (code == 2001)
-    header.append("\r\nContent-Type: image/png\r\nContent-Length: ");
-  else
-    header.append("\r\nContent-Type: text/html\r\nContent-Length: ");
+  header.append("\r\nContent-Type: " + getMimeType(filepath) + "\r\nContent-Length: ");
+}
+
+
+std::string getMimeType(const std::string &filename) {
+
+  static std::map<std::string, std::string> mimeTypes = {
+    {".html", "text/html"},
+    {".css", "text/css"},
+    {".js", "application/javascript"},
+    {".json", "application/json"},
+    {".png", "image/png"},
+    {".ico", "image/png"},
+    {".jpg", "image/jpeg"},
+    {".gif", "image/gif"},
+    {".svg", "image/svg+xml"},
+    {".txt", "text/plain"},
+    {".pdf", "application/pdf"},
+  };
+
+  size_t dotPos = filename.rfind('.');
+  if (dotPos != std::string::npos) {
+    std::string extension = filename.substr(dotPos);
+    std::map<std::string, std::string>::iterator it = mimeTypes.find(extension);
+    if (it != mimeTypes.end()) {
+      return (it->second);
+    }
+  }
+  return "application/octet-stream";
 }

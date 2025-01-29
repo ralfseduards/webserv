@@ -12,11 +12,8 @@ bool get_response(Client& client, Request& request) {
   }
   else {
     std::string header;
-    if (request.request_path.find(".ico") != std::string::npos || request.request_path.find(".png") != std::string::npos) {
-      generate_header(header, 2001);
-    }
-    else
-      generate_header(header, 200);
+    generate_header(header, 200, request.request_path);
+
 
     std::ifstream	infile(request.request_path);
     request.response = std::string((std::istreambuf_iterator<char>(infile)), std::istreambuf_iterator<char>());

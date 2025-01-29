@@ -94,4 +94,5 @@ int post_request_header_parser(Client& client);
 int post_request_part_handler(Request& request);
 int post_request_simple_handler(Request& request);
 void response_builder(Client& client, std::string& response, int code);
-void generate_header(std::string& header, std::size_t code);
+void generate_header(std::string& header, std::size_t code, std::string& filepath);
+std::string getMimeType(const std::string &filename);

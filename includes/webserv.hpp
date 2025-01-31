@@ -27,6 +27,8 @@
 #include "Client.hpp"
 #include "Server.hpp"
 #include "Response.hpp"
+#include "TrieNode.hpp"
+
 
 enum client_status {
   OK,
@@ -102,3 +104,7 @@ void redirection_response (Response& response);
 void content_response(Response& response);
 std::string return_http_code(int code);
 void send_response(Client& client, Response& response);
+
+void insert(TrieNode* root, const std::string& path, unsigned char permissions);
+void deleteTrie(TrieNode* root);
+TrieNode* findBestMatch(TrieNode* root, const std::string& filepath);

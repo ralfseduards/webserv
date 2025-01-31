@@ -86,6 +86,9 @@ int main(void) {
   }
 
   close_fds(fd_vec);
+  for (std::map<int, Server>::iterator it = server_map.begin(); it != server_map.end(); ++it) {
+    deleteTrie((*it).second.root);
+  }
   std::clog << "Server terminated due to signal " << g_sig << std::endl;
   return (0);
 }

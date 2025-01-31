@@ -12,7 +12,7 @@ void load_http_code_page(Client& client, Response& response) {
   std::ifstream	infile;
 
   infile.open(std::to_string(response.http_code) + ".html");
-
+  response.request_path = ".html";
   if (!infile.is_open()) {
     response.file_content = "<html><body><h1>404 Not Found</h1></body></html>";
     response.http_code = 404;
@@ -50,6 +50,8 @@ std::string getMimeType(const std::string &filename) {
 
 void http_response(Client& client, Response& response) {
 
+  client.waitlist[0].response.request_path = client.waitlist[0].request_path;
+
   response.code_string = return_http_code(response.http_code);
   if (response.http_code == 301 || response.http_code == 302 || response.http_code == 307 || response.http_code == 308) {
     redirection_response(response);
@@ -60,7 +62,7 @@ void http_response(Client& client, Response& response) {
   }
 
 
-  response.content_type = getMimeType(client.waitlist[0].request_path);
+  response.content_type = getMimeType(client.waitlist[0].response.request_path);
   content_response(response);
 }
 

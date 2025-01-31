@@ -42,23 +42,22 @@ int createServers(std::vector<pollfd>& fd_vec, std::map<int, Server>& server_map
   new_server.page_directory = "www/01-pages";
   new_server.post_directory = "www/02-received";
 
-  new_server.directories = {
-    {"www/01-pages", (GET)},
-    {"www/02-received", (GET | POST | DELETE)},
-    {"www/03-stash", (GET | POST)}
-  };
-
+  new_server.root = new TrieNode();
+  insert(new_server.root, "www", (GET));
+  insert(new_server.root, "www/01-pages", (GET));
+  insert(new_server.root, "www/02-received", (GET | POST | DELETE));
+  insert(new_server.root, "www/01-pages/nested", (0));
+  insert(new_server.root, "www/03-stash", (GET | POST));
 
   new_server.routing_table = {
     // {"favicon.ico", "www/01-pages/favicon.ico"},
     {"/",          "www/01-pages/index.html"},
     {"/multipart", "www/01-pages/message.html"}
   };
+
   new_server.redirection_table = {
     {"/google", "http://google.com"}
   };
-
-
 
   if (new_server.server_socket == -1) {
     std::cerr << "Error in server creation" << std::endl;
@@ -66,21 +65,6 @@ int createServers(std::vector<pollfd>& fd_vec, std::map<int, Server>& server_map
   }
 
   server_map.emplace(new_server.server_socket, new_server);
-
-  Server new_server2;
-  new_server2.methods |= (GET | DELETE);
-  new_server2.ports = {8081};
-  new_server2.max_body_size = MAX_REQUEST_SIZE;
-  new_server2.server_socket = getSocket(fd_vec, 8081);
-  new_server2.server_name = "HARDCODED SERVER2";
-  new_server2.root_directory = "/home/tsurma/Documents/common_core/webserv";
-  new_server2.routing_table = new_server.routing_table;
-  new_server2.redirection_table = new_server.redirection_table;
-  if (new_server2.server_socket == -1) {
-    exit(ERROR); //TODO: elaborate, log, cleanup
-  }
-
-  server_map.emplace(new_server2.server_socket, new_server2);
 
   return (OK);
 }

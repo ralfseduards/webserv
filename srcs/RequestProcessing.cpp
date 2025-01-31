@@ -30,19 +30,31 @@ bool set_route(Client& client, std::string& request_file) {
   return (false);
 }
 
-int check_method_server(Client& client) {
+bool check_method_server(Client& client) {
   if ((client.server->methods & client.waitlist[0].type) == 0)
-    return (-1);
-  return (OK);
+    return (false);
+  return (true);
 }
 
 int set_root_dir(Client& client) {
   return (chdir(client.server->root_directory.c_str()));
 }
 
+bool check_method_route(Client& client) {
+  Request&  request =  client.waitlist[0];
+  Server& server = *client.server;
+  TrieNode* match = findBestMatch(server.root, request.request_path);
+  if (match == nullptr) {
+    return (false);
+  }
+  if ((match->permissions & request.type) == 0)
+    return (false);
+  return (true);
+}
+
 void process_request(Client& client) {
 
-  if (check_method_server(client) == -1) {
+  if (check_method_server(client) == false) {
     std::clog << "Not implemented method: " << client.waitlist[0].type << std::endl;
     client.waitlist[0].type = INVALID;
   }
@@ -60,18 +72,27 @@ void process_request(Client& client) {
     return ;
   }
 
-
   // Replaces the request path with the one in the routing table
   if (set_route(client, client.waitlist[0].request_path) == false) {
     client.waitlist[0].is_file_path = is_file_path(client.waitlist[0]);
   }
 
+
+    // if the request wasn't routed and is not a file path, amend the request path to point to the page directory
+  if (client.waitlist[0].was_routed == false && client.waitlist[0].is_file_path == false && client.waitlist[0].type == GET) {
+      client.waitlist[0].request_path = client.server->page_directory + client.waitlist[0].request_path;
+    }
+
+  if (check_method_route(client) == false) {
+    std::clog << client.waitlist[0].request_path << "\n";
+    std::clog << "Method not allowed on path" << std::endl;
+    client.waitlist[0].type = INVALID;
+  }
+
   switch (client.waitlist[0].type)
   {
   case GET:
-    if (client.waitlist[0].was_routed == false && client.waitlist[0].is_file_path == false) {
-      client.waitlist[0].request_path = client.server->page_directory + client.waitlist[0].request_path;
-    }
+
     if (get_response(client, client.waitlist[0]) == true)
       client.status = CLOSE;
     break;

@@ -12,7 +12,8 @@ SRC =	srcs/main.cpp\
 			srcs/ResponseBuilder.cpp\
 			srcs/RequestProcessing.cpp\
 			srcs/DeleteResponse.cpp\
-			srcs/ParseHeader.cpp
+			srcs/ParseHeader.cpp\
+			srcs/TrieNode.cpp
 
 OBJ = $(SRC:.cpp=.o)
 

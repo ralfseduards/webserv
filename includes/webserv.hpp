@@ -10,6 +10,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
+#include <dirent.h>
 
 #include <iostream>
 #include <sstream>
@@ -108,3 +109,5 @@ void send_response(Client& client, Response& response);
 void insert(TrieNode* root, const std::string& path, unsigned char permissions);
 void deleteTrie(TrieNode* root);
 TrieNode* findBestMatch(TrieNode* root, const std::string& filepath);
+
+void list_files(const char* rootPath);

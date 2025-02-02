@@ -5,6 +5,7 @@
 #endif
 
 #define ENVP_SIZE 10
+#define MAX_WAIT 2000000      // 2 seconds
 
 // default cgi directory: cgi-dir
 // simple script : ../cgi-dir/simple.py
@@ -206,6 +207,24 @@ static void pass_request_body(std::vector<std::string>& tokenVec, int write_end)
   close(write_end);
 }
 
+/* Loops and sleeps until the MAX_WAIT sleeping time is reached. Checks if the pid has
+ * exited on each iteration by checking the return value of waitpid. Sends SIGKILL if 
+ * max timeout is reached by the child.
+*/
+static void smart_wait(pid_t pid)
+{
+  unsigned int time_slept = 0;
+  
+  while (time_slept < MAX_WAIT)
+  {
+    if (waitpid(pid, NULL, WNOHANG) > 0)
+      return ;
+    usleep(1000);
+    time_slept += 1000;
+  }
+  kill(pid, SIGKILL);     // max_timeout
+}
+
 int cgi_parse(const char **envp)
 {
   std::string request = 
@@ -228,20 +247,17 @@ int cgi_parse(const char **envp)
 
   std::vector<std::string> tokenVec = tokenize_request(request);
   char  **custom_envp = new char *[ENVP_SIZE + 1];       // hardcoded, because thats how many i choose to handle
-  create_new_envp(tokenVec, custom_envp, envp);
-
   pid_t pid;
   int   pipefd[2][2];       // pipefd[0] is the input pipe, pipefd[1] is for child output
   std::string program_name;
   char *program_args[2];
 
-
+  create_new_envp(tokenVec, custom_envp, envp);
   if (pipe(pipefd[0]) == -1)
     return(cgi_error("cgi pipe1()"));
   if (pipe(pipefd[1]) == -1)
     return(cgi_error("cgi pipe1()"));
 
-  // TODO: pass the POST body into a read pipe
   pass_request_body(tokenVec, pipefd[0][1]);
 
   pid = fork();
@@ -266,9 +282,9 @@ int cgi_parse(const char **envp)
     cgi_error("cgi execve()");
     exit(1);
   }
-  close(pipefd[0][0]); // close the read end of the read pipe
-  waitpid(pid, NULL, 0);    // TODO: have a timeout
 
+  close(pipefd[0][0]); // close the read end of the read pipe
+  smart_wait(pid);
 
   // ------------ TEST ---------------
   // close write end

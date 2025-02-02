@@ -103,12 +103,12 @@ int cgi_parse(const char **envp)
     "\n"
     "thisis=data&test=true\n";
 
-  std::vector<std::string> tokenVec = tokenize_request(request);
   char  **custom_envp = new char *[ENVP_SIZE + 1];       // hardcoded, because thats how many i choose to handle
+  std::vector<std::string> tokenVec = tokenize_request(request);
   pid_t pid;
   int   pipefd[2][2];       // pipefd[0] is the input pipe, pipefd[1] is for child output
-  std::string program_name;
   char *program_args[2];
+  std::string program_name, program_dir;
 
   create_new_envp(tokenVec, custom_envp, envp);
   if (pipe(pipefd[0]) == -1)
@@ -132,12 +132,15 @@ int cgi_parse(const char **envp)
     dup2(pipefd[1][1], 1);
     close(pipefd[1][1]);
 
-    get_program_name(program_name, custom_envp);
+    get_program_name(program_name, program_dir, custom_envp);
+
+    if (chdir(program_dir.c_str()) != 0)
+      cgi_error("cgi child chdir()");
     program_args[0] = const_cast<char *>(program_name.c_str());
     program_args[1] = NULL;
 
     execve(program_name.c_str(), program_args, custom_envp);
-    cgi_error("cgi execve()");
+    cgi_error("cgi child execve()");
     exit(1);
   }
 
@@ -157,7 +160,6 @@ int cgi_parse(const char **envp)
   close(pipefd[1][0]);
   // --------------------------------
   
-
   for (int i = 0; i < ENVP_SIZE + 1; ++i)
     delete[] custom_envp[i];
   delete[] custom_envp;

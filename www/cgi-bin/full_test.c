@@ -9,6 +9,9 @@ int main(int argc, char **argv, char **envp)
   char buffer[READ_SIZE];
   int bytes_read;
 
+  getcwd(buffer, sizeof(buffer));
+  printf("pwd: %s\n", buffer);
+
   // prints the stdin
   write(1, "printing the stdin:\n", 20);
   while ((bytes_read = read(0, buffer, READ_SIZE)) > 0)

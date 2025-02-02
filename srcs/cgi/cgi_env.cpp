@@ -81,7 +81,7 @@ static std::string find_value(const std::vector<std::string>& tokenVec, const st
  * them to make a resulting string of the full absolute path of the executable.
  * SCRIPT_NAME and DOCUMENT_ROOT should always be available and have values.
 */
-void get_program_name(std::string& result, char **custom_envp)
+void get_program_name(std::string& result_prog, std::string& result_dir, char **custom_envp)
 {
   std::string script_name;
   std::string doc_root;
@@ -100,7 +100,8 @@ void get_program_name(std::string& result, char **custom_envp)
       doc_root = token.substr(14);
     }
   }
-  result = doc_root + "www/" + script_name;   //TODO: do i need to add www/ in production??
+  result_prog = doc_root + "www/" + script_name;   //TODO: do i need to add www/ in production??
+  result_dir = doc_root + "www/cgi-bin/";
 }
 
 /* Takes a 'token vector', envp; and fills the custom_envp with values. The logic is a little hardcoded,

@@ -24,7 +24,6 @@
 #include <exception>
 #include <filesystem>
 #include <map>
-#include <regex>
 #include "Client.hpp"
 #include "Server.hpp"
 

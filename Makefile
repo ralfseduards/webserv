@@ -1,0 +1,30 @@
+CXX = c++
+CXXFLAGS = -Wall -Wextra -Werror -g3 -std=c++98
+NAME = webserv.out
+MAKEFLAGS = --no-print-directory
+
+SRC =	srcs/main.cpp\
+			srcs/Config.cpp\
+			srcs/Location.cpp\
+			srcs/Server.cpp\
+			srcs/ParseUtils.cpp\
+
+OBJ = $(SRC:.cpp=.o)
+
+$(NAME): $(OBJ)
+	$(CXX) $(CXXFLAGS) $(OBJ) -o $(NAME)
+
+%.o:%.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+all: $(NAME)
+
+clean:
+	@rm -f $(OBJ)
+
+fclean: clean
+	@rm -f $(NAME)
+
+re: fclean all
+
+.PHONY: clean fclean re all

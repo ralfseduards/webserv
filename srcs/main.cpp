@@ -1,6 +1,5 @@
 #include <unistd.h>
 
-#include <cerrno>
 #include <csignal>
 #include <iostream>
 

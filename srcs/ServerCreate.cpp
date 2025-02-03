@@ -34,7 +34,7 @@ int createServers(std::vector<pollfd>& fd_vec, std::map<int, Server>& server_map
 
   Server new_server;
   new_server.methods |= (GET | POST | DELETE);
-  new_server.ports = {8080};
+  new_server.ports.push_back(8080);
   new_server.max_body_size = MAX_REQUEST_SIZE;
   new_server.server_socket = getSocket(fd_vec, 8080);
   new_server.server_name = "HARDCODED SERVER";
@@ -49,22 +49,19 @@ int createServers(std::vector<pollfd>& fd_vec, std::map<int, Server>& server_map
   insert(new_server.root, "www/01-pages/nested", (0));
   insert(new_server.root, "www/03-stash", (GET | POST));
 
-  new_server.routing_table = {
-    // {"favicon.ico", "www/01-pages/favicon.ico"},
-    {"/",          "www/01-pages/index.html"},
-    {"/multipart", "www/01-pages/message.html"}
-  };
+  new_server.routing_table.insert(std::make_pair("/", "www/01-pages/index.html"));
+  new_server.routing_table.insert(std::make_pair("/multipart", "www/01-pages/message.html"));
 
-  new_server.redirection_table = {
-    {"/google", "http://google.com"}
-  };
+  new_server.redirection_table.insert(std::make_pair("/google", "http://google.com"));
 
   if (new_server.server_socket == -1) {
     std::cerr << "Error in server creation" << std::endl;
     return (-1);
   }
 
-  server_map.emplace(new_server.server_socket, new_server);
+  std::pair<int, Server> pair(new_server.server_socket, new_server);
+
+  server_map.insert(pair);
 
   return (OK);
 }

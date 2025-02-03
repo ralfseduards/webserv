@@ -9,8 +9,8 @@ struct TrieNode {
   TrieNode() : permissions(0) {}
 
   ~TrieNode() {
-    for (std::pair<const std::string, TrieNode *>& pair : children) {
-      delete pair.second;  // Recursively delete all children nodes
+    for (std::map<const std::string, TrieNode*>::iterator it = children.begin(); it != children.end(); ++it) {
+      delete (*it).second;
     }
   }
 };

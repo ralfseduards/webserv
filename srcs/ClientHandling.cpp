@@ -37,7 +37,7 @@ void client_add_map(std::map<int, Client>& client_map, int fd, Server* server) {
   new_client.fd = fd;
   new_client.status = OK;
   new_client.server = server;
-  client_map.emplace(fd, new_client);
+  client_map.insert(std::make_pair(fd, new_client));
   return ;
 }
 

@@ -69,7 +69,7 @@ int post_request_part_handler(Request& request) {
 
     body_end = request.body.find(boundary, begin);
 
-    std::ofstream outfile(filename, std::ios::out | std::ios::binary);
+    std::ofstream outfile(filename.c_str(), std::ios::out | std::ios::binary);
     if (!outfile.is_open()) {
       std::cerr << "Can't produce outfile" << std::endl;
       return (1);
@@ -92,7 +92,7 @@ int post_request_header_parser(Client& client) {
       if (boundary_position == std::string::npos)
         return (HEADER_INVAL_REGEX_VAL);
       std::string boundary = client.waitlist[0].header_map.at("Content-Type").substr(boundary_position + 9, std::string::npos);
-      client.waitlist[0].header_map.emplace("boundary=", "--" + boundary);
+      client.waitlist[0].header_map.insert(std::make_pair("boundary=", "--" + boundary));
   }
   return (OK);
 }

@@ -1,16 +1,14 @@
-#include <unistd.h>
-
-#include <csignal>
-#include <iostream>
-
 #include "../includes/webserv.hpp"
 
-volatile std::sig_atomic_t g_sig = 0;
+volatile sig_atomic_t g_sig = 0;
 
+/* main signal handler - sets the signumber in g_sig and then
+ * sets/runs the default signal handler
+*/
 void signal_handler(int sig)
 {
   g_sig = sig;
-  signal(SIGINT, SIG_DFL);  // Restore default behavior
+  signal(sig, SIG_DFL);   // although this is not exactly reentrant
 }
 
 void close_fds(std::vector<pollfd>& fd_vec)
@@ -46,7 +44,7 @@ int main(void)
   // TODO: Parse config file and populate servers
   g_sig = createServers(fd_vec, server_map);
 
-  while (!g_sig) // Main loop
+  while (g_sig == 0) // Main loop
   {
     if (poll(fd_vec.data(), fd_vec.size(), -1) == -1)
     {

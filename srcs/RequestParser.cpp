@@ -2,8 +2,11 @@
 #include "../includes/Client.hpp"
 #include "../includes/Request.hpp"
 
-int incoming_message(std::vector<pollfd>& fd_vec, std::map<int, Client>& client_map, std::size_t& i) {
-  (void)receive_request(fd_vec[i], client_map[fd_vec[i].fd]); //return value voided for clarity, new method uses state in struct
+/* The orchestrator of receiving and processing a request on the socket. */
+int incoming_message(std::vector<pollfd>& fd_vec, std::map<int, Client>& client_map, std::size_t& i)
+{
+  (void) receive_request(fd_vec[i], client_map[fd_vec[i].fd]); //return value voided for clarity, new method uses state in struct
+
   if (client_map[fd_vec[i].fd].status != OK && client_map[fd_vec[i].fd].status != RECEIVING)
     return (1);
   else if (client_map[fd_vec[i].fd].waitlist.size() > 0)
@@ -11,8 +14,11 @@ int incoming_message(std::vector<pollfd>& fd_vec, std::map<int, Client>& client_
   return (0);
 }
 
-int receive_request(pollfd& client_socket, Client& client) {
-
+/* Reads the request from the socket; populates the Client struct;
+ * returns a status code.
+ */
+int receive_request(pollfd& client_socket, Client& client)
+{
   ssize_t bytes_received;
   std::size_t header_length;
 
@@ -23,12 +29,14 @@ int receive_request(pollfd& client_socket, Client& client) {
   //Read from the socket buffer in request buffer
   bytes_received = recv(client_socket.fd, request_buffer, BUFFER_SIZE, 0);
 
-  if (bytes_received == 0) {
+  if (bytes_received == 0)
+  {
     std::clog << "Client Disconnected" << std::endl;
     client.status = DISCONNECTED;
     return (DISCONNECTED);
   }
-  else if (bytes_received < 0) {
+  else if (bytes_received < 0)
+  {
     std::cerr << "bytes received smaller 0" << std::endl;
     client.status = ERROR;
     return (ERROR);
@@ -40,46 +48,56 @@ int receive_request(pollfd& client_socket, Client& client) {
   client.request.append(request_buffer, bytes_received);
 
   //If the Client is currently receiving from previous POST, jump there
-  if (client.status == RECEIVING) {
-      if (client.request.size() > MAX_REQUEST_SIZE) {
-        client.status = BODY_TOO_LARGE;
-        return (BODY_TOO_LARGE);
-      }
+  if (client.status == RECEIVING)
+  {
+    if (client.request.size() > MAX_REQUEST_SIZE)
+    {
+      client.status = BODY_TOO_LARGE;
+      return (BODY_TOO_LARGE);
+    }
     post_response(client);
     if (client.status == RECEIVING)
-      return OK;
+      return (OK);
     send(client.fd, client.waitlist[0].response.c_str(), client.waitlist[0].response.length(), 0);
     client.waitlist.erase(client.waitlist.begin());
     client.status = OK;
-    return OK;
+    return (OK);
   }
-
-  //Check if a full Header is present, and if so push a new request into the queue
-  header_length = client.request.find("\r\n\r\n");
-  if (header_length != std::string::npos) {
-    Request new_request;
-    new_request.type = 0;
-    client.status = read_header(client.request.substr(0, client.request.find("\r\n\r\n")), new_request);
-    if (client.status != OK && client.status != RECEIVING)
-      return (client.status);
-    client.request.erase(0, client.request.find("\r\n\r\n") + 4); // delete the header from the request
-    client.waitlist.push_back(new_request);
+  else
+  {
+    //Check if a full Header is present, and if so push a new request into the queue
+    header_length = client.request.find("\r\n\r\n");
+    if (header_length != std::string::npos)
+    {
+      Request new_request;
+      new_request.type = 0;
+      client.status = read_header(client.request.substr(0, client.request.find("\r\n\r\n")), new_request);
+      if (client.status != OK && client.status != RECEIVING)
+        return (client.status);
+      client.request.erase(0, client.request.find("\r\n\r\n") + 4); // delete the header from the request
+      client.waitlist.push_back(new_request);
+    }
+    // If we got here there was no header present and the client is not actively
+    // receiving. If the header becomes too big return error
+    if (client.request.size() >= MAX_REQUEST_SIZE)
+    {
+      std::clog << "client request size larger than max" << std::endl;
+      return (HEADER_INVAL_SIZE);
+    }
   }
-  // If we got here there was no header present and the client is not actively
-  // receiving. If the header becomes too big return error
-  if (client.request.size() >= MAX_REQUEST_SIZE) {
-    std::clog << "client request size larger than max" << std::endl;
-    return (HEADER_INVAL_SIZE);
-  }
-
   return (0);
 }
 
-void set_type(Client& client) {
-
+/* parses the start_line for the first Request in the waitlist to
+ * extract the request method.
+*/
+void set_type(Client& client)
+{
   size_t prefix_len = client.waitlist[0].start_line.find(' ');
-  //TODO: error handling
-  if (prefix_len == std::string::npos) {
+  // TODO: error handling
+
+  if (prefix_len == std::string::npos)
+  {
     client.waitlist[0].type = INVALID;
     return ;
   }
@@ -92,7 +110,8 @@ void set_type(Client& client) {
     client.waitlist[0].type = DELETE;
   else if (temp == "HEAD")
     client.waitlist[0].type = HEAD;
-  else {
+  else
+  {
     client.waitlist[0].type = INVALID;
     std::clog << "Unexpected request: " << temp << std::endl;
   }

@@ -36,6 +36,7 @@ void process_request(Client& client)
   }
 
   // TODO: add cgi here
+  // if (is_cgi(client) == 1)
 
   switch (client.waitlist[0].type)
   {

@@ -1,11 +1,18 @@
 #include "../includes/webserv.hpp"
 
-void response_builder(std::string& response, int code) {
-
-  std::string path("www/01-pages");
+/* Builds a response by populating a string, based on a code that is passed in
+ * as an argument. The response might be created by opening a file (like 404.html),
+ * or by creating the string "by hand".
+ */
+void response_builder(std::string& response, int code)
+{
+  std::string path("www/01-pages"); // TODO: dont hardcode
   std::ifstream	infile;
   std::string file;
 
+  /* If the response is handcrafted, return; if the response comes from a file,
+   * break..
+   */
   switch (code)
   {
   case 201:
@@ -41,7 +48,8 @@ void response_builder(std::string& response, int code) {
     return;
   }
 
-  if (!infile.is_open()) {
+  if (!infile.is_open())
+  {
     file = "<html><body><h1>404 Not Found</h1></body></html>";
     code = 404;
   }
@@ -50,12 +58,13 @@ void response_builder(std::string& response, int code) {
 
   std::stringstream filesize;
   filesize << file.size();
-  generate_header(response, code);
+  generate_header(response, code);  /* response is overwritten with a completely new header. */
   response.append(filesize.str());
   response.append("\r\n\r\n");
   response.append(file);
 }
 
+/* Generates a header based on the code passed in as arg.*/
 void generate_header(std::string& header, std::size_t code) {
 
   header = "HTTP/1.1 ";

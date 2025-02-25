@@ -28,6 +28,8 @@
 #include "Server.hpp"
 #include "Response.hpp"
 #include "TrieNode.hpp"
+#include "Config.hpp"
+
 
 
 enum client_status {
@@ -68,9 +70,16 @@ enum port {
 
 void signal_handler(int sig);
 void close_fds(std::vector<pollfd>& fd_vec);
+void printServer(const Server& srv);
+int getSocket(std::vector<pollfd>& fd_vec, int port);
+int createServersFromConfig(std::vector<pollfd>& fd_vec,
+	std::map<int, Server>& server_map,
+	const Config& config);
+
 
 int getSocket(std::vector<pollfd>& fd_vec, int port);
 int createServers(std::vector<pollfd>& fd_vec, std::map<int, Server>& server_map);
+
 
 
 // int prepareSocket(std::vector<pollfd>& fd_vec, std::map<int, Server>& server_map);

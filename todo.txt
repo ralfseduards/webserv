@@ -1,0 +1,19 @@
+Done :
+server_socket
+Server name
+ports
+methods
+MaxBodySize
+root_directory
+error_pages
+page_directory
+
+
+to be done:
+Trie ??
+post_directory
+routing_table
+redirection_table
+
+
+

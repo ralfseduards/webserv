@@ -15,19 +15,33 @@ bool is_file_path(Request& request) {
   if (slash == 0 || slash == std::string::npos) {
     return (false);
   }
+
   request.request_path.erase(request.request_path.begin());
-  return (true);
 }
 
-
-bool set_route(Client& client, std::string& request_file) {
-  if (client.server->routing_table.find(request_file) != client.server->routing_table.end()) {
-    request_file = client.server->routing_table.at(request_file);
-    client.waitlist[0].was_routed = true;
-    return (true);
+bool set_route(Client& client, std::string &request_file) {
+  std::map<std::string, std::string>::const_iterator it =
+      client.server->routing_table.find(request_file);
+  if (it != client.server->routing_table.end()) {
+      request_file = it->second;
+      client.waitlist[0].was_routed = true;
+      return true;
   }
+  for (it = client.server->routing_table.begin(); it != client.server->routing_table.end(); ++it) {
+      const std::string &locPath = it->first;  // e.g. "/upload"
+      if (locPath.size() > 1 && locPath != "/" &&
+          request_file.compare(0, locPath.size(), locPath) == 0)
+      {
+          std::string remainder = request_file.substr(locPath.size());
+          std::string expandedPath = it->second + remainder;
+          request_file = expandedPath;
+          client.waitlist[0].was_routed = true;
+          return true;
+      }
+  }
+  // If no prefix matched, not routed
   client.waitlist[0].was_routed = false;
-  return (false);
+  return false;
 }
 
 bool check_method_server(Client& client) {

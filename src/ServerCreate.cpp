@@ -1,7 +1,8 @@
 #include "../includes/webserv.hpp"
 
 
-int getSocket(std::vector<pollfd>& fd_vec, int port) {
+int getSocket(std::vector<pollfd>& fd_vec, int port)
+{
   struct sockaddr_in addr;
   int listening_socket;
 
@@ -24,7 +25,7 @@ int getSocket(std::vector<pollfd>& fd_vec, int port) {
 
   pollfd server_fd;
   server_fd.fd = listening_socket;
-  server_fd.events = POLLIN;
+  server_fd.events = POLLIN;          // TODO: listen for other events ??
   server_fd.revents = 0;
   fd_vec.push_back(server_fd);
   return (listening_socket);
@@ -38,7 +39,7 @@ int createServers(std::vector<pollfd>& fd_vec, std::map<int, Server>& server_map
   new_server.max_body_size = MAX_REQUEST_SIZE;
   new_server.server_socket = getSocket(fd_vec, 8080);
   new_server.server_name = "HARDCODED SERVER";
-  new_server.root_directory = "/home/tsurma/Documents/common_core/webserv";
+  new_server.root_directory = "/home/tom/Desktop/code/school/webserv";
   new_server.page_directory = "www/01-pages";
   new_server.post_directory = "www/02-received";
 
@@ -54,7 +55,8 @@ int createServers(std::vector<pollfd>& fd_vec, std::map<int, Server>& server_map
 
   new_server.redirection_table.insert(std::make_pair("/google", "http://google.com"));
 
-  if (new_server.server_socket == -1) {
+  if (new_server.server_socket == -1)
+  {
     std::cerr << "Error in server creation" << std::endl;
     return (-1);
   }

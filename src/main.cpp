@@ -42,8 +42,10 @@ int main(void) {
 
   while (true && !g_sig) {  // Main loop
 
-    if (poll(fd_vec.data(), fd_vec.size(), -1) == -1) {
-      if (g_sig != 0) continue;  // Interrupted by signal, continue loop
+    if (poll(fd_vec.data(), fd_vec.size(), -1) == -1)
+    {
+      if (g_sig != 0)
+        continue;  // Interrupted by signal, continue loop
       perror("poll");
       break;
     }
@@ -78,6 +80,8 @@ int main(void) {
         incoming_message(fd_vec[i], client_map.at(fd_vec[i].fd));
 
         if (client_map.at(fd_vec[i].fd).status != OK && client_map.at(fd_vec[i].fd).status != RECEIVING) {  // Check client status
+
+          //TODO: the regex status comes from here
           client_purge(i, fd_vec, client_map, client_map.at(fd_vec[i].fd).status);
         }
       }
@@ -88,6 +92,7 @@ int main(void) {
   for (std::map<int, Server>::iterator it = server_map.begin(); it != server_map.end(); ++it) {
     deleteTrie((*it).second.root);
   }
+
   std::clog << "Server terminated due to signal " << g_sig << std::endl;
   return (0);
 }

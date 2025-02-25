@@ -23,7 +23,6 @@
 #include <exception>
 #include <filesystem>
 #include <map>
-#include <regex>
 #include "Client.hpp"
 #include "Server.hpp"
 #include "Response.hpp"
@@ -40,20 +39,20 @@ enum client_status {
   ERRPOLL,
   ERROR,
   HEADER_INVAL_COLON,
-  HEADER_INVAL_REGEX_KEY,
-  HEADER_INVAL_REGEX_VAL,
+  HEADER_INVAL_KEY,
+  HEADER_INVAL_VAL,
   HEADER_INVAL_SIZE,
   BODY_TOO_LARGE,
   BAD_METHOD
 };
 
+/* special values, so that the bitwise & can be used */
 enum methods {
   GET     = 1,
   POST    = 2,
   DELETE  = 4,
   HEAD    = 8,
   INVALID = 16
-
 };
 
 enum port {
@@ -64,7 +63,6 @@ enum port {
 
 #define http_version "HTTP/1.1"
 #define newline "\r\n"
-
 
 void signal_handler(int sig);
 void close_fds(std::vector<pollfd>& fd_vec);
@@ -88,10 +86,6 @@ bool search_header(Client& client);
 int receive_request(pollfd& client_socket, Client& client);
 void process_request(Client& client);
 int parse_header(std::string header, Request& new_request);
-bool validate_header_key(std::string& key);
-bool validate_header_value(std::string& value);
-int set_request_path(Request& request);
-void set_type(Request& request);
 bool get_response(Client& client, Request& request);
 void delete_response(Client& client);
 void post_response(Client& client);

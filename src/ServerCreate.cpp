@@ -56,7 +56,14 @@ int createServersFromConfig(std::vector<pollfd>& fd_vec,
         new_server.page_directory  = parsedServers[i].getIndex();
         new_server.max_body_size   = parsedServers[i].getMaxBodySize();
         new_server.methods         = convertAllowedMethods(parsedServers[i].getAllowedMethods());
-
+		if (new_server.root_directory.empty()) {
+			char cwd[PATH_MAX];
+			if (getcwd(cwd, PATH_MAX) == NULL) {
+				std::cerr << "Error getting current working directory" << std::endl;
+				return ERROR;
+			}
+			new_server.root_directory = cwd;
+		}
         // /upload location sets the post_directory if found
         const std::map<std::string, Location>& locs = parsedServers[i].getLocations();
         std::map<std::string, Location>::const_iterator up = locs.find("/upload");

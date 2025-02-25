@@ -16,7 +16,8 @@ bool is_file_path(Request& request) {
     return (false);
   }
 
-  request.request_path.erase(request.request_path.begin());
+  // request.request_path.erase(request.request_path.begin());
+  return (true);
 }
 
 bool set_route(Client& client, std::string &request_file) {

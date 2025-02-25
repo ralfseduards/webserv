@@ -1,19 +1,16 @@
-#include <unistd.h>
-
-#include <csignal>
-#include <iostream>
-
 #include "../includes/webserv.hpp"
+#include <iostream>
 
 volatile std::sig_atomic_t g_sig = 0;
 
 void signal_handler(int sig) {
   g_sig = sig;
-  signal(SIGINT, SIG_DFL);  // Restore default behavior
+  std::signal(SIGINT, SIG_DFL);  // Restore default behavior
 }
 
-void close_fds(std::vector<pollfd>& fd_vec) {
-  std::clog << "Shutting down" << std::endl;
+void close_fds(std::vector<pollfd>& fd_vec)
+{
+  std::cout << "Shutting down" << std::endl;
   for (size_t i = 0; i < fd_vec.size(); ++i) {
     shutdown(fd_vec[i].fd, SHUT_RDWR);
     close(fd_vec[i].fd);

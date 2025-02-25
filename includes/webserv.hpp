@@ -19,10 +19,11 @@
 #include <cstdio>
 #include <vector>
 #include <algorithm>
-#include <signal.h>
+#include <csignal>
 #include <exception>
 #include <filesystem>
 #include <map>
+
 #include "Client.hpp"
 #include "Server.hpp"
 #include "Response.hpp"

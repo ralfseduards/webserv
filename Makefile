@@ -1,5 +1,6 @@
-CXX = clang
-CXXFLAGS = -Wall -Wextra -Werror -g3 -std=c++98 -v
+# TODO:: change this to c++
+CXX = clang 
+CXXFLAGS = -Wall -Wextra -Werror -g3 -std=c++98
 NAME = webserv
 MAKEFLAGS = --no-print-directory
 BUILD_DIR = ./build

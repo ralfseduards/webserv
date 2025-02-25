@@ -6,6 +6,7 @@
 #include "Request.hpp"
 
 struct Server;
+
 struct Client
 {
   Server* server;

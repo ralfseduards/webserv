@@ -31,6 +31,7 @@
 #include "Config.hpp"
 
 
+
 enum client_status {
   OK,
   RECEIVING,
@@ -74,6 +75,11 @@ int getSocket(std::vector<pollfd>& fd_vec, int port);
 int createServersFromConfig(std::vector<pollfd>& fd_vec,
 	std::map<int, Server>& server_map,
 	const Config& config);
+
+
+int getSocket(std::vector<pollfd>& fd_vec, int port);
+int createServers(std::vector<pollfd>& fd_vec, std::map<int, Server>& server_map);
+
 
 
 // int prepareSocket(std::vector<pollfd>& fd_vec, std::map<int, Server>& server_map);

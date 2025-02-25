@@ -2,6 +2,7 @@
 
 #include <csignal>
 #include <iostream>
+
 #include "../includes/webserv.hpp"
 
 volatile std::sig_atomic_t g_sig = 0;
@@ -46,6 +47,7 @@ int main(int argc, char **argv) {
     {
       printServer(it->second);
     }
+    
   while (true && !g_sig) {  // Main loop
 
     if (poll(fd_vec.data(), fd_vec.size(), -1) == -1) {

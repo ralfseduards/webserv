@@ -15,10 +15,9 @@ bool is_file_path(Request& request) {
   if (slash == 0 || slash == std::string::npos) {
     return (false);
   }
-  // request.request_path.erase(request.request_path.begin());
-  return (true);
-}
 
+  request.request_path.erase(request.request_path.begin());
+}
 
 bool set_route(Client& client, std::string &request_file) {
   std::map<std::string, std::string>::const_iterator it =
@@ -44,7 +43,6 @@ bool set_route(Client& client, std::string &request_file) {
   client.waitlist[0].was_routed = false;
   return false;
 }
-
 
 bool check_method_server(Client& client) {
   if ((client.server->methods & client.waitlist[0].type) == 0)

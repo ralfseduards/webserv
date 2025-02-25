@@ -12,6 +12,7 @@ void load_http_code_page(Client& client, Response& response) {
   std::ifstream	infile;
   std::string temp = to_string(response.http_code) + ".html";
 
+
   infile.open(temp.c_str());
   response.request_path = ".html";
   if (!infile.is_open()) {

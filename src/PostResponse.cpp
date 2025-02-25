@@ -85,12 +85,12 @@ int post_request_part_handler(Request& request) {
 int post_request_header_parser(Client& client) {
 
   if (client.waitlist[0].header_map.count("Content-Type") == 0)
-    return (HEADER_INVAL_REGEX_KEY);
+    return (HEADER_INVAL_KEY);
   //Checking for multipart and boundary
   if (client.waitlist[0].header_map.at("Content-Type").find("multipart") != std::string::npos) {
       std::size_t boundary_position = client.waitlist[0].header_map.at("Content-Type").find("boundary=");
       if (boundary_position == std::string::npos)
-        return (HEADER_INVAL_REGEX_VAL);
+        return (HEADER_INVAL_VAL);
       std::string boundary = client.waitlist[0].header_map.at("Content-Type").substr(boundary_position + 9, std::string::npos);
       client.waitlist[0].header_map.insert(std::make_pair("boundary=", "--" + boundary));
   }

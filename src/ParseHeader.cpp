@@ -30,7 +30,7 @@ static void sanitize_line(std::string& line) {
   // Carriage return, then replace any loose carriage returns that may be
   // included in error.
   if (*(line.end() - 1) == '\r')
-    line.pop_back();
+    line.erase(line.size() - 1);
   std::replace(line.begin(), line.end(), '\r', ' ');
 }
 
@@ -61,7 +61,7 @@ static int parse_line(std::string& line, Request& new_request)
   }
 
   //Put the "key" and "value" into the hader map. The key does NOT have the colon
-  new_request.header_map.emplace(key, value);
+  new_request.header_map[key] = value;
   return (OK);
 }
 

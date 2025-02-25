@@ -44,7 +44,7 @@ bool check_method_route(Client& client) {
   Request&  request =  client.waitlist[0];
   Server& server = *client.server;
   TrieNode* match = findBestMatch(server.root, request.request_path);
-  if (match == nullptr) {
+  if (match == NULL) {
     return (false);
   }
   if ((match->permissions & request.type) == 0)
@@ -101,8 +101,7 @@ void process_request(Client& client) {
     if (client.waitlist[0].is_file_path == false) {
       client.waitlist[0].request_path = client.server->post_directory + client.waitlist[0].request_path;
     }
-    //TODO: remove stoi
-    client.waitlist[0].content_length = std::stoi(client.waitlist[0].header_map.at("Content-Length"));
+    client.waitlist[0].content_length = std::atoi(client.waitlist[0].header_map.at("Content-Length").c_str());
     if (client.waitlist[0].content_length > client.server->max_body_size) {
       client.status = BODY_TOO_LARGE;
       return ;

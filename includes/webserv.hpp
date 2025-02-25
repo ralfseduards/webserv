@@ -64,7 +64,6 @@ enum port {
 #define http_version "HTTP/1.1"
 #define newline "\r\n"
 
-void signal_handler(int sig);
 void close_fds(std::vector<pollfd>& fd_vec);
 
 int getSocket(std::vector<pollfd>& fd_vec, int port);
@@ -92,23 +91,17 @@ void post_response(Client& client);
 int post_request_header_parser(Client& client);
 int post_request_part_handler(Request& request);
 int post_request_simple_handler(Request& request);
-std::string getMimeType(const std::string &filename);
 void http_response(Client& client, Response& response);
-void redirection_response (Response& response);
-void content_response(Response& response);
-std::string return_http_code(int code);
 void send_response(Client& client, Response& response);
 
 void insert(TrieNode* root, const std::string& path, unsigned char permissions);
 void deleteTrie(TrieNode* root);
 TrieNode* findBestMatch(TrieNode* root, const std::string& filepath);
 
-
-#include <sstream>
-#include <string>
-
+// TODO: what is this ?
 template <typename T>
-std::string to_string(const T& value) {
+std::string to_string(const T& value)
+{
     std::ostringstream oss;
     oss << value;
     return oss.str();

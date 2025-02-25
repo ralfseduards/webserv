@@ -1,5 +1,5 @@
 CXX = clang
-CXXFLAGS = -Wall -Wextra -Werror -g3 -std=c++98
+CXXFLAGS = -Wall -Wextra -Werror -g3 -std=c++98 -v
 NAME = webserv
 MAKEFLAGS = --no-print-directory
 BUILD_DIR = ./build

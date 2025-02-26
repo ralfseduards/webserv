@@ -17,7 +17,7 @@ void post_response(Client& client) {
   client.request.erase(0, client.waitlist[0].content_length);
   client.status = OK;
 
-  if (chdir((client.server->root_directory + client.server->post_directory).c_str()) == -1) {
+  if (chdir((client.server->root_directory + "/" + client.server->post_directory).c_str()) == -1) {
     std::cerr << "Page directory not accessible:" << client.server->post_directory << std::endl;
     client.status = ERROR;
     return ;
@@ -29,13 +29,15 @@ void post_response(Client& client) {
     post_request_simple_handler(client.waitlist[0]);
   }
 
-  response_builder(client.waitlist[0].response, 201);
+  client.waitlist[0].response.http_code = 201;
+  client.waitlist[0].response.has_content = false;
+  http_response(client, client.waitlist[0].response);
   client.status = OK;
 }
 
 int post_request_simple_handler(Request& request) {
 
-  std::ofstream outfile("www/02-received/Outfile");
+  std::ofstream outfile("Outfile");
   outfile << request.body;
   outfile.close();
   return (0);
@@ -59,7 +61,6 @@ int post_request_part_handler(Request& request) {
     end = request.body.find("\r\n\r\n", begin) + 2 * rn.length(); //begin of content
 
     subheader = request.body.substr(begin, end - 1);
-    // request.body.erase(request.body.begin(), request.body.begin() + end - 1);
 
     filename_pos = subheader.find("filename=") + 9;
     filename_end = subheader.find('"', filename_pos + 1);
@@ -68,7 +69,11 @@ int post_request_part_handler(Request& request) {
 
     body_end = request.body.find(boundary, begin);
 
-    std::ofstream outfile("www/02-received/" + filename, std::ios::out | std::ios::binary);
+    std::ofstream outfile(filename.c_str(), std::ios::out | std::ios::binary);
+    if (!outfile.is_open()) {
+      std::cerr << "Can't produce outfile" << std::endl;
+      return (1);
+    }
     outfile << request.body.substr(end, body_end - end - 2);
     outfile.close();
     request.body.erase(request.body.begin(), request.body.begin() + body_end);
@@ -87,7 +92,7 @@ int post_request_header_parser(Client& client) {
       if (boundary_position == std::string::npos)
         return (HEADER_INVAL_REGEX_VAL);
       std::string boundary = client.waitlist[0].header_map.at("Content-Type").substr(boundary_position + 9, std::string::npos);
-      client.waitlist[0].header_map.emplace("boundary=", "--" + boundary);
+      client.waitlist[0].header_map.insert(std::make_pair("boundary=", "--" + boundary));
   }
   return (OK);
 }

@@ -1,5 +1,4 @@
-#include "cgi.hpp"
-
+#include "../includes/cgi.hpp"
 
 /* like strdup() in C but using strings and new */
 static char* cpp_strdup(std::string str)
@@ -13,11 +12,10 @@ static char* cpp_strdup(std::string str)
   return (newStr);
 }
 
-
 /* function returns PATH=... with whatever value is set in envp.
  * (returns "PATH=" if there is no path set)
 */
-static std::string find_path(const char **envp)
+static std::string find_path(char **envp)
 {
   std::string check_str = "PATH=";
 
@@ -50,6 +48,10 @@ static void parse_first_line(const std::string& line, char **&custom_envp)
   }
   custom_envp[2] = cpp_strdup("REQUEST_METHOD=" + tokens[0]);
 
+  /* set the tokens[1] to be the actual file name and everything after (the query string) */
+  size_t last_pos = tokens[1].find_last_of("/");
+  tokens[1] = tokens[1].substr(last_pos);
+
   /* extract the query string if it exists */
   end = tokens[1].find('?');
   if(end != std::string::npos)
@@ -64,24 +66,11 @@ static void parse_first_line(const std::string& line, char **&custom_envp)
   }
 }
 
-
-/* Searches for a http header field from tokenVec, that starts with *to_find*.
- * If field is found, returns the value, if not, returns ""
-*/
-static std::string find_value(const std::vector<std::string>& tokenVec, const std::string to_find)
-{
-  for (std::vector<std::string>::const_iterator it = tokenVec.begin(); it < tokenVec.end(); ++it)
-    if ((*it).substr(0, to_find.size()) == to_find)
-      return ((*it).substr(to_find.size() + 1));    // skip the space
-  return ("");
-}
-
-
 /* Takes my custom_envp and finds 2 values: SCRIPT_NAME and DOCUMENT_ROOT and combines
  * them to make a resulting string of the full absolute path of the executable.
  * SCRIPT_NAME and DOCUMENT_ROOT should always be available and have values.
 */
-void get_program_name(std::string& result_prog, std::string& result_dir, char **custom_envp)
+void get_program_name(std::string& result_prog, std::string& result_dir, char **custom_envp, Client& client)
 {
   std::string script_name;
   std::string doc_root;
@@ -100,23 +89,34 @@ void get_program_name(std::string& result_prog, std::string& result_dir, char **
       doc_root = token.substr(14);
     }
   }
-  result_prog = doc_root + "www/" + script_name;   //TODO: do i need to add www/ in production??
-  result_dir = doc_root + "www/cgi-bin/";
+  if (doc_root[doc_root.size() - 1] != '/')
+    doc_root.push_back('/');
+
+  result_prog = doc_root + client.server->routing_table["/cgi-bin"];
+  if (result_prog[result_prog.size() - 1] != '/')
+    result_prog.push_back('/');
+  result_prog += script_name;
+
+  result_dir = doc_root + client.server->routing_table["/cgi-bin"];
 }
 
 /* Takes a 'token vector', envp; and fills the custom_envp with values. The logic is a little hardcoded,
  * taking into account the size of custom_envp and the custom env variable names that we need.
+ *
+ * USES THE environ GLOBAL FOR GETTING THE ENVIRONMENT
 */
-void create_new_envp(const std::vector<std::string>& tokenVec, char **&custom_envp, const char **envp)
+void create_new_envp(Client& client, char **&custom_envp)
 {
-  custom_envp[0] = cpp_strdup(find_path(envp));   // PATH
-  custom_envp[1] = cpp_strdup("DOCUMENT_ROOT=/home/tom/Desktop/code/school/webserv/");   // TODO: get from Server
-  parse_first_line(tokenVec[0], custom_envp);
-  custom_envp[5] = cpp_strdup("CONTENT_TYPE=" + find_value(tokenVec, "Content-Type:"));
-  custom_envp[6] = cpp_strdup("CONTENT_LENGHT=" + find_value(tokenVec, "Content-Lenght:"));
-  custom_envp[7] = cpp_strdup("HTTP_USER_AGENT=" + find_value(tokenVec, "User-Agent:"));
-  custom_envp[8] = cpp_strdup("HTTP_HOST=" + find_value(tokenVec, "Host:"));
-  custom_envp[9] = cpp_strdup("HTTP_REFERRER=" + find_value(tokenVec, "Referrer:"));
+  // a shorthand for client.waitlist[0]
+  Request req = client.waitlist[0];
+
+  custom_envp[0] = cpp_strdup(find_path(environ));
+  custom_envp[1] = cpp_strdup("DOCUMENT_ROOT=" + client.server->root_directory);
+  parse_first_line(req.start_line, custom_envp);
+  custom_envp[5] = cpp_strdup("CONTENT_TYPE=" + req.header_map["Content-Type"]);
+  custom_envp[6] = cpp_strdup("CONTENT_LENGHT=" + req.header_map["Content-Lenght"]);
+  custom_envp[7] = cpp_strdup("HTTP_USER_AGENT=" + req.header_map["User-Agent"]);
+  custom_envp[8] = cpp_strdup("HTTP_HOST=" + req.header_map["Host"]);
+  custom_envp[9] = cpp_strdup("HTTP_REFERRER=" + req.header_map["Referrer:"]);
   custom_envp[10] = NULL;
 }
-

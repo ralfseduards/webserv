@@ -104,57 +104,68 @@ void process_request(Client& client) {
     client.waitlist[0].type = INVALID;
   }
 
-  switch (client.waitlist[0].type)
+  // if request line contains /cgi-bin/, then send to cgi_parser
+  if (client.waitlist[0].start_line.find("/cgi-bin/") != std::string::npos)
+    cgi_parse(client);
+  else
   {
-  case GET:
+    switch (client.waitlist[0].type)
+      {
+      case GET:
 
-    if (get_response(client, client.waitlist[0]) == true)
-      client.status = CLOSE;
-    break;
+        if (get_response(client, client.waitlist[0]) == true)
+          client.status = CLOSE;
+        break;
 
-  case POST:
-    if (client.waitlist[0].is_file_path == false) {
-      client.waitlist[0].request_path = client.server->post_directory + client.waitlist[0].request_path;
-    }
-    //TODO: remove stoi
-    client.waitlist[0].content_length = std::stoi(client.waitlist[0].header_map.at("Content-Length"));
-    if (client.waitlist[0].content_length > client.server->max_body_size) {
-      client.status = BODY_TOO_LARGE;
-      return ;
-    }
-    post_response(client);
-    if (client.status == RECEIVING)
-      return ;
-    break;
+      case POST:
+        if (client.waitlist[0].is_file_path == false) {
+          client.waitlist[0].request_path = client.server->post_directory + client.waitlist[0].request_path;
+        }
+        //TODO: remove stoi
+        client.waitlist[0].content_length = std::stoi(client.waitlist[0].header_map.at("Content-Length"));
+        if (client.waitlist[0].content_length > client.server->max_body_size) {
+          client.status = BODY_TOO_LARGE;
+          return ;
+        }
+        post_response(client);
+        if (client.status == RECEIVING)
+          return ;
+        break;
 
-  case DELETE:
-    if (client.waitlist[0].is_file_path == false) {
-      client.waitlist[0].request_path = client.server->post_directory + client.waitlist[0].request_path;
-    }
-    delete_response(client);
-    break;
+      case DELETE:
+        if (client.waitlist[0].is_file_path == false) {
+          client.waitlist[0].request_path = client.server->post_directory + client.waitlist[0].request_path;
+        }
+        delete_response(client);
+        break;
 
-  case HEAD:
-    break;
+      case HEAD:
+        break;
 
-  case INVALID:
-    client.waitlist[0].response.http_code = 501;
-    client.waitlist[0].response.has_content = false;
-    http_response(client, client.waitlist[0].response);
-    break;
+      case INVALID:
+        client.waitlist[0].response.http_code = 501;
+        client.waitlist[0].response.has_content = false;
+        http_response(client, client.waitlist[0].response);
+        break;
 
-  default:
-    client.waitlist[0].response.http_code = 501;
-    client.waitlist[0].response.has_content = false;
-    http_response(client, client.waitlist[0].response);
-    break;
+      default:
+        client.waitlist[0].response.http_code = 501;
+        client.waitlist[0].response.has_content = false;
+        http_response(client, client.waitlist[0].response);
+        break;
+      }
   }
+
+  // send the response
   send_response(client, client.waitlist[0].response);
 }
 
 
-void send_response(Client& client, Response& response) {
-  std::clog << "///////////////////////////////\n" << "client.fd: " << client.fd << "\nResponse:\n" << client.waitlist[0].response.content << std::endl;
+void send_response(Client& client, Response& response)
+{
+  std::clog << "-------=================Response for client "<< client.fd << "========================-------\n";
+  std::clog << client.waitlist[0].response.content << "\n";
+  std::clog << "-------======================================================-------" << std::endl;
   //send the response and delete all temp data
   send(client.fd, response.content.c_str(), response.content.length(), 0);
   client.waitlist.erase(client.waitlist.begin());

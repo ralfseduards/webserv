@@ -127,7 +127,10 @@ void process_request(Client& client)
 
   // if request line contains /cgi-bin/, then send to cgi_parser
   if (client.waitlist[0].start_line.find("/cgi-bin/") != std::string::npos)
+  {
     cgi_parse(client);
+    http_response(client, client.waitlist[0].response);
+  }
   else
   {
     switch (client.waitlist[0].type)

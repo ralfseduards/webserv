@@ -21,6 +21,20 @@ void close_fds(std::vector<pollfd>& fd_vec) {
 
 void client_purge(std::size_t& i, std::vector<pollfd>& fd_vec, std::map<int, Client>& client_map, int status) {
   client_error_message(i, fd_vec[i].fd, status);
+  if (status == BODY_TOO_LARGE) {
+    Client& client = client_map.at(fd_vec[i].fd);
+    Response errorResp;
+    errorResp.http_code = 413;
+    errorResp.has_content = true;
+
+    // Load error page and format response
+    load_http_code_page(client, errorResp);
+    http_response(client, errorResp);
+
+    // Send the response
+    send(fd_vec[i].fd, errorResp.content.c_str(), errorResp.content.length(), 0);
+    usleep(50000); // Ensure response is sent
+  }
   if (status != POLLINVALID) {
     shutdown(fd_vec[i].fd, SHUT_RDWR);
     close(fd_vec[i].fd);

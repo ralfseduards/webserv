@@ -47,7 +47,6 @@ int parse_line(std::string& line, Request& new_request) {
     return (HEADER_INVAL_REGEX_VAL);
   }
 
-  //Put the "key" and "value" into the hader map. The key does NOT have the colon
   new_request.header_map.emplace(key, value);
   return (OK);
 }

@@ -55,14 +55,12 @@ bool new_request(Client& client)
     new_req.was_routed  = false;
     new_req.is_file_path = false;
 
-    // Attempt to parse HTTP header
     client.status = parse_header(
         client.request.substr(0, client.request.find("\r\n\r\n")),
         new_req
     );
     if (client.status != OK && client.status != RECEIVING)
     {
-        // Check for typical header errors that warrant a 400 Bad Request
         if ( client.status == HEADER_INVAL_COLON      ||
              client.status == HEADER_INVAL_REGEX_KEY  ||
              client.status == HEADER_INVAL_REGEX_VAL  ||

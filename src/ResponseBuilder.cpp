@@ -1,6 +1,5 @@
 #include "../includes/webserv.hpp"
 
-// loads the http code default paged into buffer
 void load_http_code_page(Client& client, Response& response)
 {
 
@@ -19,6 +18,7 @@ void load_http_code_page(Client& client, Response& response)
             return;
         }
     }
+	response.request_path = "error.html";
 
     // 🔹 Fallback logic if no custom error page is set in config
     switch (response.http_code) {
@@ -92,6 +92,7 @@ void http_response(Client& client, Response& response) {
 
 
   response.content_type = getMimeType(response.request_path);
+  std::cout <<"mime type is "<< response.content_type << std::endl;
   content_response(response);
 }
 
@@ -117,6 +118,10 @@ void content_response(Response& response) {
   response.content.append("Content-Type: ");
   response.content.append(response.content_type);
   response.content.append(newline);
+  if (response.http_code > 400) {
+	response.content.append("Connection close");
+	response.content.append(newline);
+  }
   response.content.append("Content-Length: ");
   response.content.append(std::to_string(response.file_content.length()));
   response.content.append(newline);

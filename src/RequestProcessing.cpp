@@ -69,6 +69,14 @@ bool check_method_route(Client& client) {
 
 void process_request(Client& client) {
 
+	if (client.waitlist[0].type == INVALID) {
+        std::clog << "Method not implemented" << std::endl;
+        client.waitlist[0].response.http_code = 501;
+        client.waitlist[0].response.has_content = false;
+        http_response(client, client.waitlist[0].response);
+        send_response(client, client.waitlist[0].response);
+        return;
+  }
   if (client.waitlist[0].was_routed && check_method_route(client) == false) {
     std::clog << client.waitlist[0].request_path << "\n";
     std::clog << "Method not allowed on path" << std::endl;

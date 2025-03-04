@@ -13,7 +13,6 @@ struct Client
   int fd;
   int status;
   time_t timeout;
-  std::string request;
+  std::string request;            /* stores the just he body of the request */
   std::vector<Request> waitlist;
-
 };

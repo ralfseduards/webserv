@@ -35,17 +35,17 @@ int main(int argc, char **argv) {
     std::vector<pollfd> fd_vec;
     std::map<int, Server> server_map;
     std::map<int, Client> client_map;
-    
-    std::string configPath = (argc == 2) ? argv[1] : "config/webserv.conf";
+
+    std::string configPath = (argc == 2) ? argv[1] : "config/default.conf";
     Config config(configPath);
-    config.printConfig();
-    
+    // config.printConfig();
+
     g_sig = createServersFromConfig(fd_vec, server_map, config);
-    for (std::map<int, Server>::const_iterator it = server_map.begin();
-      it != server_map.end(); ++it)
-    {
-      printServer(it->second);
-    }
+    // for (std::map<int, Server>::const_iterator it = server_map.begin();
+    //   it != server_map.end(); ++it)
+    // {
+    //   printServer(it->second);
+    // }
   while (true && !g_sig) {  // Main loop
 
     if (poll(fd_vec.data(), fd_vec.size(), -1) == -1) {
@@ -83,7 +83,7 @@ int main(int argc, char **argv) {
       if (fd_vec[i].revents & POLLIN && i >= server_map.size()) {
         incoming_message(fd_vec[i], client_map.at(fd_vec[i].fd));
 
-        if (client_map.at(fd_vec[i].fd).status != OK && client_map.at(fd_vec[i].fd).status != RECEIVING) {  // Check client status
+      if (client_map.at(fd_vec[i].fd).status != OK && client_map.at(fd_vec[i].fd).status != RECEIVING) {  // Check client status
           client_purge(i, fd_vec, client_map, client_map.at(fd_vec[i].fd).status);
         }
       }

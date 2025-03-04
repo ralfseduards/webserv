@@ -7,13 +7,23 @@ MaxBodySize
 root_directory
 error_pages
 page_directory
-
-
-to be done:
 Trie ??
 post_directory
 routing_table
 redirection_table
+400
+404
+403
+200
+201
+405
+to be done:
+
+413
+500
+501
+DELETE
+POLLOUT
 
 
 

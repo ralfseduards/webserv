@@ -53,7 +53,8 @@ enum methods {
   POST    = 2,
   DELETE  = 4,
   HEAD    = 8,
-  INVALID = 16
+  INVALID = 100,
+  NOT_ALLOWED = 101
 
 };
 

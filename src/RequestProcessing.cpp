@@ -15,7 +15,6 @@ bool is_file_path(Request& request) {
   if (slash == 0 || slash == std::string::npos) {
     return (false);
   }
-  // request.request_path.erase(request.request_path.begin());
   return (true);
 }
 
@@ -70,10 +69,17 @@ bool check_method_route(Client& client) {
 
 void process_request(Client& client) {
 
-  if (check_method_server(client) == false) {
-    std::clog << "Not implemented method: " << client.waitlist[0].type << std::endl;
-    client.waitlist[0].type = INVALID;
-  }
+  if (client.waitlist[0].was_routed && check_method_route(client) == false) {
+    std::clog << client.waitlist[0].request_path << "\n";
+    std::clog << "Method not allowed on path" << std::endl;
+    client.waitlist[0].response.http_code = 405;
+    client.waitlist[0].response.has_content = false;
+    http_response(client, client.waitlist[0].response);
+    send_response(client, client.waitlist[0].response);
+    return;
+}
+
+
 
   if (set_root_dir(client) == -1) {
     std::clog << "Couldn't set root directory" << std::endl;
@@ -102,7 +108,11 @@ void process_request(Client& client) {
   if (check_method_route(client) == false) {
     std::clog << client.waitlist[0].request_path << "\n";
     std::clog << "Method not allowed on path" << std::endl;
-    client.waitlist[0].type = INVALID;
+    client.waitlist[0].response.http_code = 405;
+    client.waitlist[0].response.has_content = false;
+    http_response(client, client.waitlist[0].response);
+    send_response(client, client.waitlist[0].response);
+    return;
   }
 
   switch (client.waitlist[0].type)
@@ -152,6 +162,7 @@ void process_request(Client& client) {
   }
   send_response(client, client.waitlist[0].response);
 }
+
 
 
 void send_response(Client& client, Response& response) {

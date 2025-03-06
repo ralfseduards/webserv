@@ -12,6 +12,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <dirent.h>
+#include <limits.h>
 
 #include <iostream>
 #include <sstream>
@@ -46,6 +47,9 @@ enum client_status {
   HEADER_INVAL_REGEX_KEY,
   HEADER_INVAL_REGEX_VAL,
   HEADER_INVAL_SIZE,
+  HEADER_INVAL_VERSION,
+  HEADER_INVAL_CONTENT_LENGTH,
+  HEADER_INVAL_DUPLICATE,
   BODY_TOO_LARGE,
   BAD_METHOD
 };
@@ -55,7 +59,8 @@ enum methods {
   POST    = 2,
   DELETE  = 4,
   HEAD    = 8,
-  INVALID = 16
+  INVALID = 100,
+  NOT_ALLOWED = 101
 
 };
 
@@ -97,11 +102,15 @@ bool validate_header_key(std::string& key);
 bool validate_header_value(std::string& value);
 int set_request_path(Request& request);
 void set_type(Request& request);
-bool get_response(Client& client);
+bool get_response(Client& client, Request& request);
 void delete_response(Client& client);
 void post_response(Client& client);
 void http_response(Client& client, Response& response);
-
+void redirection_response (Response& response);
+void content_response(Response& response);
+std::string return_http_code(int code);
+void send_response(Client& client, Response& response);
+void load_http_code_page(Client& client, Response& response);
 void insert(TrieNode* root, const std::string& path, unsigned char permissions);
 void deleteTrie(TrieNode* root);
 TrieNode* findBestMatch(TrieNode* root, const std::string& filepath);

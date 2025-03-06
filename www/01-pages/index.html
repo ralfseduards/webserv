@@ -2,14 +2,45 @@
   <body>
     <h1>Hello, World!</h1>
     <a href="/multipart">other site</a>
-    <a href="/www/01-pages/403.html">Testing forbidden</a>
+    <a href="/secret.html">Testing Forbidden</a>
+
+    <!-- File Upload Form -->
     <form action="/upload" method="POST" enctype="multipart/form-data">
       <!-- File input field -->
       <label for="file">Choose a file:</label>
-      <input type="file" id="file" name="file" required />
-      <br /><br />
+      <input type="file" id="file" name="file" required>
+      <br><br>
       <!-- Submit button -->
       <button type="submit">Upload File</button>
     </form>
+
+    <h2>Delete Files</h2>
+    <div>
+      <label for="deleteFile">File to delete:</label>
+      <input type="text" id="deleteFile" placeholder="filename.txt">
+      <button onclick="deleteFile()">Delete File (JS)</button>
+    </div>
+    <script>
+      function deleteFile() {
+        const filename = document.getElementById('deleteFile').value;
+        if (!filename){
+          alert('please enter a filename');
+          return
+        }
+        const url = '/upload/' + filename;
+        console.log("Sending DELETE request to:", url);
+        fetch('/upload/' + filename, {
+          method: 'DELETE'
+        }).then(response => {
+          if (response.ok) {
+            alert('File deleted successfully');
+          } else {
+            alert('Error deleting file: ' + response.status);
+          }
+        }).catch(err => {
+          alert('error ' + err);
+        })
+      }
+    </script>
   </body>
 </html>

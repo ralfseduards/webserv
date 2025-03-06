@@ -2,8 +2,7 @@
 #include "../includes/Client.hpp"
 #include "../includes/Request.hpp"
 
-static bool search_header(Client& client)
-{
+bool search_header(Client& client) {
   std::size_t header_length;
   header_length = client.request.find("\r\n\r\n");
   if (header_length == std::string::npos)
@@ -11,19 +10,44 @@ static bool search_header(Client& client)
   return (true);
 }
 
-static bool new_request(Client& client)
-{
-  Request new_request;
-  new_request.type = 0;
-  new_request.was_routed = false;
-  new_request.is_file_path = false;
-  client.status = parse_header(client.request.substr(0, client.request.find("\r\n\r\n")), new_request);
-  if (client.status != OK && client.status != RECEIVING)
-    return (false);
-  client.request.erase(0, client.request.find("\r\n\r\n") + 4); // delete the header from the request
-  client.waitlist.push_back(new_request);
-  return (true);
+bool new_request(Client& client) {
+    Request new_req;
+    new_req.type = 0;
+    new_req.was_routed = false;
+    new_req.is_file_path = false;
+
+    client.status = parse_header(
+        client.request.substr(0, client.request.find("\r\n\r\n")),
+        new_req
+    );
+    if (client.status != OK && client.status != RECEIVING) {
+
+        if (client.status == HEADER_INVAL_COLON ||
+            client.status == HEADER_INVAL_REGEX_KEY ||
+            client.status == HEADER_INVAL_REGEX_VAL ||
+            client.status == HEADER_INVAL_VERSION ||
+			client.status == HEADER_INVAL_CONTENT_LENGTH ||
+			client.status == HEADER_INVAL_DUPLICATE ||
+            client.status == HEADER_INVAL_SIZE ){
+            new_req.response.http_code = 400;
+            new_req.response.has_content = false;
+            http_response(client, new_req.response);
+            send(client.fd,
+                 new_req.response.content.c_str(),
+                 new_req.response.content.size(),
+                 0);
+
+            client.status = CLOSE;
+        }
+        return false;
+    }
+    // If header parse was OK or we are still receiving (chunked POST?), proceed
+    // Erase the parsed header from the raw request buffer
+    client.request.erase(0, client.request.find("\r\n\r\n") + 4);
+    client.waitlist.push_back(new_req);
+    return true;
 }
+
 
 // Writes the system buffer into client request string and checks for recv error
 static int receive_request(pollfd& client_socket, Client& client)
@@ -54,18 +78,18 @@ static int receive_request(pollfd& client_socket, Client& client)
 
   //Add the request buffer into a string
   client.request.append(request_buffer, bytes_received);
+  std::cout << "Client request: " << client.request << std::endl;
+  std::cout << "client request ended" << std::endl;
   return (OK);
 }
 
-int incoming_message(pollfd& client_socket, Client& client)
-{
+int incoming_message(pollfd& client_socket, Client& client) {
+
   (void)receive_request(client_socket, client);
 
   //If the Client is currently receiving from previous POST, jump there
-  if (client.status == RECEIVING)
-  {
-      if (client.request.size() > MAX_REQUEST_SIZE)
-      {
+  if (client.status == RECEIVING) {
+      if (client.request.size() > MAX_REQUEST_SIZE) {
         client.status = BODY_TOO_LARGE;
         return (1);
       }
@@ -78,19 +102,21 @@ int incoming_message(pollfd& client_socket, Client& client)
     return (OK);
   }
 
-  if (search_header(client) == true && new_request(client) == false)
+  if (search_header(client) == true) {
+    if (new_request(client) == false)
       return (1);
-  else if (client.request.size() >= MAX_REQUEST_SIZE)
-  {
+  }
+  else if (client.request.size() >= MAX_REQUEST_SIZE) {
     std::clog << "client request size larger than max" << std::endl;
     client.status = HEADER_INVAL_SIZE;
   }
-
+  std::cout	<< "Client request: " << client.request << std::endl;
   if (client.status != OK && client.status != RECEIVING)
     return (1);
 
   if (client.waitlist.size() > 0)
     process_request(client);
-
+  std::cout << "Client status: " << client.status << std::endl;
   return (OK);
 }
+

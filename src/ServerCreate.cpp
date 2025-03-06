@@ -55,9 +55,17 @@ int createServersFromConfig(std::vector<pollfd>& fd_vec,
         new_server.server_name     = parsedServers[i].getServerName();
         new_server.root_directory  = parsedServers[i].getRoot();
         new_server.page_directory  = parsedServers[i].getIndex();
+		new_server.autoindex       = parsedServers[i].getAutoIndex();
         new_server.max_body_size   = parsedServers[i].getMaxBodySize();
         new_server.methods         = convertAllowedMethods(parsedServers[i].getAllowedMethods());
-
+		if (new_server.root_directory.empty()) {
+			char cwd[PATH_MAX];
+			if (getcwd(cwd, PATH_MAX) == NULL) {
+				std::cerr << "Error getting current working directory" << std::endl;
+				return ERROR;
+			}
+			new_server.root_directory = cwd;
+		}
         // /upload location sets the post_directory if found
         const std::map<std::string, Location>& locs = parsedServers[i].getLocations();
         std::map<std::string, Location>::const_iterator up = locs.find("/upload");
@@ -127,6 +135,7 @@ void printServer(const Server& srv)
     std::cout << std::endl;
     std::cout << "methods (bitmask): "  << static_cast<int>(srv.methods) << std::endl;
     std::cout << "max_body_size: "      << srv.max_body_size << std::endl;
+	std::cout << "autoindex: "          << srv.autoindex << std::endl;
     std::cout << "root (TrieNode*): "   << srv.root << std::endl;
     std::cout << "root_directory: "     << srv.root_directory << std::endl;
     std::cout << "page_directory: "     << srv.page_directory << std::endl;

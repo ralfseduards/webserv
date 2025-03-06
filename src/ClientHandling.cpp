@@ -70,7 +70,6 @@ void client_error_message(size_t i, int fd, int status)
     std::clog << "Client " << i << "\nFD: " << fd << "\nAction: Invalid" << std::endl;
     break;
 
-  //TODO: send error 400
   case HEADER_INVAL_COLON:
     std::clog << "Client " << i << "\nFD: " << fd << "\nAction: Malformed Header" << std::endl;
     break;
@@ -87,7 +86,6 @@ void client_error_message(size_t i, int fd, int status)
     std::clog << "Client " << i << "\nFD: " << fd << "\nAction: Malformed Header" << std::endl;
     break;
 
-  //TODO: send error 413
   case BODY_TOO_LARGE:
     std::clog << "Client " << i << "\nFD: " << fd << "\nAction: Content too large" << std::endl;
     break;

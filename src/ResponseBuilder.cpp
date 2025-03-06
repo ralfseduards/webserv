@@ -92,7 +92,6 @@ void http_response(Client& client, Response& response) {
 
 
   response.content_type = getMimeType(response.request_path);
-  std::cout <<"mime type is "<< response.content_type << std::endl;
   content_response(response);
 }
 

@@ -40,7 +40,7 @@ bool set_route(Client& client, std::string &request_file) {
       }
   }
   // If no prefix matched, not routed
-  
+
   client.waitlist[0].was_routed = false;
   return false;
 }
@@ -149,7 +149,7 @@ void process_request(Client& client) {
 
   case DELETE:
     if (client.waitlist[0].is_file_path == false) {
-      client.waitlist[0].request_path = client.server->post_directory + client.waitlist[0].request_path;
+      client.waitlist[0].request_path = client.waitlist[0].request_path;
     }
     delete_response(client);
     break;

@@ -29,7 +29,6 @@ int incoming_message(pollfd& client_socket, Client& client) {
     std::clog << "client request size larger than max" << std::endl;
     client.status = HEADER_INVAL_SIZE;
   }
-  std::cout	<< "Client request: " << client.request << std::endl;
   if (client.status != OK && client.status != RECEIVING)
     return (1);
 
@@ -58,10 +57,7 @@ bool new_request(Client& client) {
         client.request.substr(0, client.request.find("\r\n\r\n")),
         new_req
     );
-    std::cout << "After parse_header, status: " << client.status << std::endl;
-
     if (client.status != OK && client.status != RECEIVING) {
-        std::cout << "Handling error status: " << client.status << std::endl;
 
         if (client.status == HEADER_INVAL_COLON ||
             client.status == HEADER_INVAL_REGEX_KEY ||
@@ -85,9 +81,7 @@ bool new_request(Client& client) {
     // If header parse was OK or we are still receiving (chunked POST?), proceed
     // Erase the parsed header from the raw request buffer
     client.request.erase(0, client.request.find("\r\n\r\n") + 4);
-	std::cout << "before pushback " << std::endl;
     client.waitlist.push_back(new_req);
-	std::cout	<< "after pushback" << std::endl;
     return true;
 }
 

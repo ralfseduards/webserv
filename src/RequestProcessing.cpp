@@ -17,8 +17,6 @@ static bool is_file_path(Request& request)
   std::size_t slash = request.request_path.find_last_of("/");
   if (slash == 0 || slash == std::string::npos)
     return (false);
-
-  // request.request_path.erase(request.request_path.begin());
   return (true);
 }
 
@@ -47,16 +45,19 @@ static bool set_route(Client& client, std::string &request_file)
       }
   }
   // If no prefix matched, not routed
+  
   client.waitlist[0].was_routed = false;
   return (false);
 }
 
+/*
 static bool check_method_server(Client& client)
 {
   if ((client.server->methods & client.waitlist[0].type) == 0)
     return (false);
   return (true);
 }
+*/
 
 static int set_root_dir(Client& client)
 {
@@ -76,23 +77,24 @@ static bool check_method_route(Client& client)
   return (true);
 }
 
-static void send_response(Client& client, Response& response)
-{
-  std::clog << "-------=================Response for client "<< client.fd << "========================-------\n";
-  std::clog << client.waitlist[0].response.content << "\n";
-  std::clog << "-------======================================================-------" << std::endl;
-
-  //send the response and delete all temp data
-  send(client.fd, response.content.c_str(), response.content.length(), 0);
-  client.waitlist.erase(client.waitlist.begin());
-}
-
 void process_request(Client& client)
 {
-  if (check_method_server(client) == false)
-  {
-    std::clog << "Not implemented method: " << client.waitlist[0].type << std::endl;
-    client.waitlist[0].type = INVALID;
+  if (client.waitlist[0].type == INVALID) {
+    std::clog << "Method not implemented" << std::endl;
+    client.waitlist[0].response.http_code = 501;
+    client.waitlist[0].response.has_content = false;
+    http_response(client, client.waitlist[0].response);
+    send_response(client, client.waitlist[0].response);
+    return;
+  }
+  if (client.waitlist[0].was_routed && check_method_route(client) == false) {
+    std::clog << client.waitlist[0].request_path << "\n";
+    std::clog << "Method not allowed on path" << std::endl;
+    client.waitlist[0].response.http_code = 405;
+    client.waitlist[0].response.has_content = false;
+    http_response(client, client.waitlist[0].response);
+    send_response(client, client.waitlist[0].response);
+    return;
   }
 
   if (set_root_dir(client) == -1)
@@ -114,7 +116,7 @@ void process_request(Client& client)
   if (set_route(client, client.waitlist[0].request_path) == false)
     client.waitlist[0].is_file_path = is_file_path(client.waitlist[0]);
 
-    // if the request wasn't routed and is not a file path, amend the request path to point to the page directory
+  // if the request wasn't routed and is not a file path, amend the request path to point to the page directory
   if (client.waitlist[0].was_routed == false && client.waitlist[0].is_file_path == false && client.waitlist[0].type == GET)
     client.waitlist[0].request_path = client.server->page_directory + client.waitlist[0].request_path;
 
@@ -122,7 +124,11 @@ void process_request(Client& client)
   {
     std::clog << client.waitlist[0].request_path << "\n";
     std::clog << "Method not allowed on path" << std::endl;
-    client.waitlist[0].type = INVALID;
+    client.waitlist[0].response.http_code = 405;
+    client.waitlist[0].response.has_content = false;
+    http_response(client, client.waitlist[0].response);
+    send_response(client, client.waitlist[0].response);
+    return;
   }
 
   // if request line contains /cgi-bin/, then send to cgi_parser
@@ -134,7 +140,7 @@ void process_request(Client& client)
   else
   {
     switch (client.waitlist[0].type)
-      {
+    {
       case GET:
 
         if (get_response(client, client.waitlist[0]) == true)
@@ -177,9 +183,16 @@ void process_request(Client& client)
         client.waitlist[0].response.has_content = false;
         http_response(client, client.waitlist[0].response);
         break;
-      }
+    }
   }
 
   // send the response
   send_response(client, client.waitlist[0].response);
+}
+
+void send_response(Client& client, Response& response) {
+  std::clog << "///////////////////////////////\n" << "client.fd: " << client.fd << "\nResponse:\n" << client.waitlist[0].response.content << std::endl;
+  //send the response and delete all temp data
+  send(client.fd, response.content.c_str(), response.content.length(), 0);
+  client.waitlist.erase(client.waitlist.begin());
 }

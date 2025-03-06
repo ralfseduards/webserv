@@ -75,7 +75,6 @@ std::string getMimeType(const std::string &filename) {
   return ("application/octet-stream");
 }
 
-
 /* Response builder for redirection */
 void redirection_response (Response& response) {
   response.content = http_version;

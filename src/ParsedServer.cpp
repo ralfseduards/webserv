@@ -108,7 +108,6 @@ void ParsedServer::setLocations(std::map<std::string, Location> locations) {
 }
 
 void ParsedServer::setErrorPages(std::map<int, std::string> error_pages) {
-    // Merging new ones with existing ones if needed
     this->errorPages.insert(error_pages.begin(), error_pages.end());
 }
 

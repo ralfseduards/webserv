@@ -29,8 +29,11 @@ void post_response(Client& client) {
     post_request_simple_handler(client.waitlist[0]);
   }
 
+  client.waitlist[0].response.file_content =
+    "<html><body><h1>File uploaded successfully!</h1></body></html>";
+  client.waitlist[0].response.request_path = "upload_success.html";
   client.waitlist[0].response.http_code = 201;
-  client.waitlist[0].response.has_content = false;
+  client.waitlist[0].response.has_content = true;
   http_response(client, client.waitlist[0].response);
   client.status = OK;
 }

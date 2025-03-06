@@ -1,9 +1,8 @@
 #include "../includes/webserv.hpp"
-
 #include <string>
 
-
 //TODO: replace with 98 function
+#include <regex>
 bool validate_header_key(std::string& key) {
   const std::regex key_regex("^[!#$%&'*+.^_`|~0-9a-zA-Z-]+$");
   return (std::regex_match(key, key_regex));

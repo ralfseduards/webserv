@@ -30,3 +30,7 @@
 *.exe
 *.out
 *.app
+
+.vscode
+Outfile
+www/02-received/*

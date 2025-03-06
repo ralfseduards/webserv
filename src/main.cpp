@@ -2,6 +2,7 @@
 
 #include <csignal>
 #include <iostream>
+
 #include "../includes/webserv.hpp"
 
 volatile std::sig_atomic_t g_sig = 0;

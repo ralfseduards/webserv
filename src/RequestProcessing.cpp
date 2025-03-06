@@ -50,12 +50,14 @@ static bool set_route(Client& client, std::string &request_file)
   return (false);
 }
 
+/*
 static bool check_method_server(Client& client)
 {
   if ((client.server->methods & client.waitlist[0].type) == 0)
     return (false);
   return (true);
 }
+*/
 
 static int set_root_dir(Client& client)
 {

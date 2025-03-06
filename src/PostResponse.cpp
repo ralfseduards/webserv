@@ -1,42 +1,5 @@
 #include "../includes/webserv.hpp"
 
-void post_response(Client& client) {
-
-  if (client.request.size() < client.waitlist[0].content_length) {
-    client.status = RECEIVING;
-    return ;
-  }
-  client.status = post_request_header_parser(client);
-  if (client.status != OK) {
-    std::clog << "Client Status: " << client.status << std::endl;
-    return;
-  }
-
-  // Extract the body from the request string
-  client.waitlist[0].body = client.request.substr(0, client.waitlist[0].content_length);
-  client.request.erase(0, client.waitlist[0].content_length);
-  client.status = OK;
-
-  if (chdir((client.server->root_directory + "/" + client.server->post_directory).c_str()) == -1) {
-    std::cerr << "Page directory not accessible:" << client.server->post_directory << std::endl;
-    client.status = ERROR;
-    return ;
-  }
-
-  if (client.waitlist[0].header_map.at("Content-Type").find("multipart") == 0) {
-    post_request_part_handler(client.waitlist[0]);
-  } else {
-    post_request_simple_handler(client.waitlist[0]);
-  }
-
-  client.waitlist[0].response.file_content =
-    "<html><body><h1>File uploaded successfully!</h1></body></html>";
-  client.waitlist[0].response.request_path = "upload_success.html";
-  client.waitlist[0].response.http_code = 201;
-  client.waitlist[0].response.has_content = true;
-  http_response(client, client.waitlist[0].response);
-  client.status = OK;
-}
 
 int post_request_simple_handler(Request& request)
 {
@@ -102,16 +65,14 @@ static int post_request_header_parser(Client& client)
   return (OK);
 }
 
-void post_response(Client& client)
-{
-  if (client.request.size() < client.waitlist[0].content_length)
-  {
+void post_response(Client& client) {
+
+  if (client.request.size() < client.waitlist[0].content_length) {
     client.status = RECEIVING;
     return ;
   }
   client.status = post_request_header_parser(client);
-  if (client.status != OK)
-  {
+  if (client.status != OK) {
     std::clog << "Client Status: " << client.status << std::endl;
     return;
   }
@@ -121,20 +82,23 @@ void post_response(Client& client)
   client.request.erase(0, client.waitlist[0].content_length);
   client.status = OK;
 
-  if (chdir((client.server->root_directory + "/" + client.server->post_directory).c_str()) == -1)
-  {
+  if (chdir((client.server->root_directory + "/" + client.server->post_directory).c_str()) == -1) {
     std::cerr << "Page directory not accessible:" << client.server->post_directory << std::endl;
     client.status = ERROR;
     return ;
   }
 
-  if (client.waitlist[0].header_map.at("Content-Type").find("multipart") == 0)
+  if (client.waitlist[0].header_map.at("Content-Type").find("multipart") == 0) {
     post_request_part_handler(client.waitlist[0]);
-  else
+  } else {
     post_request_simple_handler(client.waitlist[0]);
+  }
 
+  client.waitlist[0].response.file_content =
+    "<html><body><h1>File uploaded successfully!</h1></body></html>";
+  client.waitlist[0].response.request_path = "upload_success.html";
   client.waitlist[0].response.http_code = 201;
-  client.waitlist[0].response.has_content = false;
+  client.waitlist[0].response.has_content = true;
   http_response(client, client.waitlist[0].response);
   client.status = OK;
 }

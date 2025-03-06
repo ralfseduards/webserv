@@ -2,43 +2,6 @@
 #include "../includes/Client.hpp"
 #include "../includes/Request.hpp"
 
-int incoming_message(pollfd& client_socket, Client& client) {
-
-  (void)receive_request(client_socket, client);
-
-  //If the Client is currently receiving from previous POST, jump there
-  if (client.status == RECEIVING) {
-      if (client.request.size() > MAX_REQUEST_SIZE) {
-        client.status = BODY_TOO_LARGE;
-        return (1);
-      }
-    post_response(client);
-    if (client.status == RECEIVING)
-      return (OK);
-    send(client.fd, client.waitlist[0].response.content.c_str(), client.waitlist[0].response.content.length(), 0);
-    client.waitlist.erase(client.waitlist.begin());
-    client.status = OK;
-    return (OK);
-  }
-
-  if (search_header(client) == true) {
-    if (new_request(client) == false)
-      return (1);
-  }
-  else if (client.request.size() >= MAX_REQUEST_SIZE) {
-    std::clog << "client request size larger than max" << std::endl;
-    client.status = HEADER_INVAL_SIZE;
-  }
-  std::cout	<< "Client request: " << client.request << std::endl;
-  if (client.status != OK && client.status != RECEIVING)
-    return (1);
-
-  if (client.waitlist.size() > 0)
-    process_request(client);
-  std::cout << "Client status: " << client.status << std::endl;
-  return (OK);
-}
-
 bool search_header(Client& client) {
   std::size_t header_length;
   header_length = client.request.find("\r\n\r\n");
@@ -125,15 +88,13 @@ static int receive_request(pollfd& client_socket, Client& client)
   return (OK);
 }
 
-int incoming_message(pollfd& client_socket, Client& client)
-{
+int incoming_message(pollfd& client_socket, Client& client) {
+
   (void)receive_request(client_socket, client);
 
   //If the Client is currently receiving from previous POST, jump there
-  if (client.status == RECEIVING)
-  {
-      if (client.request.size() > MAX_REQUEST_SIZE)
-      {
+  if (client.status == RECEIVING) {
+      if (client.request.size() > MAX_REQUEST_SIZE) {
         client.status = BODY_TOO_LARGE;
         return (1);
       }
@@ -146,19 +107,21 @@ int incoming_message(pollfd& client_socket, Client& client)
     return (OK);
   }
 
-  if (search_header(client) == true && new_request(client) == false)
+  if (search_header(client) == true) {
+    if (new_request(client) == false)
       return (1);
-  else if (client.request.size() >= MAX_REQUEST_SIZE)
-  {
+  }
+  else if (client.request.size() >= MAX_REQUEST_SIZE) {
     std::clog << "client request size larger than max" << std::endl;
     client.status = HEADER_INVAL_SIZE;
   }
-
+  std::cout	<< "Client request: " << client.request << std::endl;
   if (client.status != OK && client.status != RECEIVING)
     return (1);
 
   if (client.waitlist.size() > 0)
     process_request(client);
-
+  std::cout << "Client status: " << client.status << std::endl;
   return (OK);
 }
+

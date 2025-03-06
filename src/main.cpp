@@ -20,6 +20,8 @@ void close_fds(std::vector<pollfd>& fd_vec) {
 }
 
 void client_purge(std::size_t& i, std::vector<pollfd>& fd_vec, std::map<int, Client>& client_map, int status) {
+  if (status == HEADER_INVAL_VERSION)
+	std::cout << "Header invalid version" << std::endl;
   client_error_message(i, fd_vec[i].fd, status);
   if (status == BODY_TOO_LARGE) {
     Client& client = client_map.at(fd_vec[i].fd);

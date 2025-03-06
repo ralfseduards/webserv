@@ -1,5 +1,5 @@
 CXX = c++
-CXXFLAGS = -Wall -Wextra -Werror -g3
+CXXFLAGS = -Wall -Wextra -Werror -g3 -std=c++98
 NAME = webserv
 MAKEFLAGS = --no-print-directory
 BUILD_DIR = ./build

@@ -1,17 +1,22 @@
 #include "../includes/webserv.hpp"
 #include <string>
 
-//TODO: replace with 98 function
-#include <regex>
-bool validate_header_key(std::string& key) {
-  const std::regex key_regex("^[!#$%&'*+.^_`|~0-9a-zA-Z-]+$");
-  return (std::regex_match(key, key_regex));
+bool validate_header_key(std::string& key)
+{
+  const std::string allowed_chars = "!#$%&'*+.^_`|~";
+
+  for(std::string::iterator it = key.begin(); it != key.end(); ++it)
+    if (std::isalnum(*it) == 0 && allowed_chars.find(*it) != std::string::npos)
+      return (false);
+  return (true);
 }
 
-//TODO: replace with 98 function
-bool validate_header_value(std::string& value) {
-  const std::regex value_regex("^[\\t\\x20-\\x7E]*$");
-  return (std::regex_match(value, value_regex));
+bool validate_header_value(std::string& value)
+{
+  for(std::string::iterator it = value.begin(); it != value.end(); ++it)
+      if (*it != '\t' && !(*it >= 32 && *it <= 126))
+        return (false);
+  return (true);
 }
 
 bool validate_http_version(const std::string& start_line) {
@@ -30,7 +35,7 @@ void sanitize_line(std::string& line) {
   // Carriage return, then replace any loose carriage returns that may be
   // included in error.
   if (*(line.end() - 1) == '\r')
-    line.pop_back();
+  	line.erase(line.size() - 1);
   std::replace(line.begin(), line.end(), '\r', ' ');
 }
 
@@ -58,7 +63,7 @@ int parse_line(std::string& line, Request& new_request) {
     return (HEADER_INVAL_REGEX_VAL);
   }
 
-  new_request.header_map.emplace(key, value);
+  new_request.header_map[key] = value;
   return (OK);
 }
 

@@ -3,7 +3,7 @@
 void delete_response(Client& client) {
 
   std::cout << client.waitlist[0].request_path << std::endl;
-  std::ifstream file(client.waitlist[0].request_path);
+  std::ifstream file(client.waitlist[0].request_path.c_str());
   if (access(client.waitlist[0].request_path.c_str(), F_OK) != 0) {
 	std::cout << "File not found" << std::endl;
 	client.waitlist[0].response.http_code = 404;

@@ -137,7 +137,7 @@ void process_request(Client& client)
       {
       case GET:
 
-        if (get_response(client, client.waitlist[0]) == true)
+        if (get_response(client) == true)
           client.status = CLOSE;
         break;
 

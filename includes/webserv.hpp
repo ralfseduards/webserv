@@ -97,7 +97,7 @@ bool validate_header_key(std::string& key);
 bool validate_header_value(std::string& value);
 int set_request_path(Request& request);
 void set_type(Request& request);
-bool get_response(Client& client, Request& request);
+bool get_response(Client& client);
 void delete_response(Client& client);
 void post_response(Client& client);
 void http_response(Client& client, Response& response);
@@ -108,6 +108,8 @@ TrieNode* findBestMatch(TrieNode* root, const std::string& filepath);
 
 void list_files(const char* rootPath);
 int cgi_parse(Client& client);
+
+void list_directory(Client& client);
 
 
 #include <sstream>

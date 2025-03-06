@@ -133,7 +133,7 @@ void http_response(Client& client, Response& response)
   }
   if (response.has_content == false)
     load_http_code_page(client, response);
-  if (response.cgi_response == true)
+  if (response.manual_response == true)
     response.content_type = "text/html";
   else
     response.content_type = getMimeType(client.waitlist[0].response.request_path);

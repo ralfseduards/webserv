@@ -19,5 +19,3 @@ struct Server
   std::map<int, std::string> errorPages;
   bool 			autoindex;
 };
-
-

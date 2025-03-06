@@ -2,6 +2,7 @@
 
 #include <csignal>
 #include <iostream>
+
 #include "../includes/webserv.hpp"
 
 volatile std::sig_atomic_t g_sig = 0;
@@ -57,11 +58,20 @@ int main(int argc, char **argv) {
     // config.printConfig();
 
     g_sig = createServersFromConfig(fd_vec, server_map, config);
+<<<<<<< HEAD
     // for (std::map<int, Server>::const_iterator it = server_map.begin();
     //   it != server_map.end(); ++it)
     // {
     //   printServer(it->second);
     // }
+=======
+    for (std::map<int, Server>::const_iterator it = server_map.begin();
+      it != server_map.end(); ++it)
+    {
+      printServer(it->second);
+    }
+    
+>>>>>>> main
   while (true && !g_sig) {  // Main loop
 
     if (poll(fd_vec.data(), fd_vec.size(), -1) == -1) {

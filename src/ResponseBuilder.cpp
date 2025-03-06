@@ -20,7 +20,7 @@ void load_http_code_page(Client& client, Response& response)
     }
 	response.request_path = "error.html";
 
-    // 🔹 Fallback logic if no custom error page is set in config
+    //  Fallback logic if no custom error page is set in config
     switch (response.http_code) {
         case 400:
             response.file_content = "<html><body><h1>400 Bad Request</h1><p>Your request could not be understood by the server.</p></body></html>";
@@ -49,10 +49,7 @@ void load_http_code_page(Client& client, Response& response)
     }
 }
 
-
-
 std::string getMimeType(const std::string &filename) {
-
   static std::map<std::string, std::string> mimeTypes = {
     {".html", "text/html"},
     {".css", "text/css"},
@@ -68,16 +65,15 @@ std::string getMimeType(const std::string &filename) {
   };
 
   size_t dotPos = filename.rfind('.');
-  if (dotPos != std::string::npos) {
+  if (dotPos != std::string::npos)
+  {
     std::string extension = filename.substr(dotPos);
     std::map<std::string, std::string>::iterator it = mimeTypes.find(extension);
-    if (it != mimeTypes.end()) {
+    if (it != mimeTypes.end())
       return (it->second);
-    }
   }
-  return "application/octet-stream";
+  return ("application/octet-stream");
 }
-
 
 void http_response(Client& client, Response& response) {
 
@@ -96,42 +92,46 @@ void http_response(Client& client, Response& response) {
   content_response(response);
 }
 
+/* Response builder for redirection */
 void redirection_response (Response& response) {
   response.content = http_version;
   response.content.append(" ");
   response.content.append(response.code_string);
-  response.content.append(newline);
+  response.content.append(LINE_DELIMITER);
   response.content.append("Location: ");
   response.content.append(response.redirection_URL);
-  response.content.append(newline);
+  response.content.append(LINE_DELIMITER);
   response.content.append("Connection: close");
-  response.content.append(newline);
-  response.content.append(newline);
+  response.content.append(LINE_DELIMITER);
+  response.content.append(LINE_DELIMITER);
 }
 
-void content_response(Response& response) {
-
+/* Response builder for every request that doesnt involve redirection */
+static void content_response(Response& response)
+{
   response.content = http_version;
   response.content.append(" ");
   response.content.append(response.code_string);
-  response.content.append(newline);
+  response.content.append(LINE_DELIMITER);
   response.content.append("Content-Type: ");
   response.content.append(response.content_type);
-  response.content.append(newline);
+  response.content.append(LINE_DELIMITER);
   if (response.http_code > 400) {
 	response.content.append("Connection close");
-	response.content.append(newline);
+  response.content.append(LINE_DELIMITER);
   }
   response.content.append("Content-Length: ");
   response.content.append(std::to_string(response.file_content.length()));
-  response.content.append(newline);
-  response.content.append(newline);
+  response.content.append(LINE_DELIMITER);
+  response.content.append(LINE_DELIMITER);
   response.content.append(response.file_content);
-  response.content.append(newline);
-  response.content.append(newline);
+  response.content.append(LINE_DELIMITER);
+  response.content.append(LINE_DELIMITER);
 }
 
-std::string return_http_code(int code) {
+/* Takes the integer repsonse code and returns a string with the full response status */
+static std::string return_http_code(int code)
+{
   switch (code)
   {
     case 200: return ("200 OK");
@@ -150,4 +150,23 @@ std::string return_http_code(int code) {
     case 505: return ("505 HTTP Version Not Supported");
     default:  return ("404 Not Found");
   }
+}
+
+/* Main function for buliding a http response that later gets sent to the client by send_response() */
+void http_response(Client& client, Response& response)
+{
+  client.waitlist[0].response.request_path = client.waitlist[0].request_path;
+  response.code_string = return_http_code(response.http_code);
+  if (response.http_code == 301 || response.http_code == 302 || response.http_code == 307 || response.http_code == 308)
+  {
+    redirection_response(response);
+    return ;
+  }
+  if (response.has_content == false)
+    load_http_code_page(client, response);
+  if (response.cgi_response == true)
+    response.content_type = "text/html";
+  else
+    response.content_type = getMimeType(client.waitlist[0].response.request_path);
+  content_response(response);
 }

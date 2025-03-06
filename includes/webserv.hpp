@@ -4,6 +4,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/sendfile.h>
+#include <sys/wait.h>
 
 #include <netinet/in.h>
 #include <poll.h>
@@ -23,12 +24,12 @@
 #include <exception>
 #include <filesystem>
 #include <map>
-#include <regex>
 #include "Client.hpp"
 #include "Server.hpp"
 #include "Response.hpp"
 #include "TrieNode.hpp"
 #include "Config.hpp"
+
 
 
 enum client_status {
@@ -68,7 +69,7 @@ enum port {
 };
 
 #define http_version "HTTP/1.1"
-#define newline "\r\n"
+#define LINE_DELIMITER "\r\n"
 
 
 void signal_handler(int sig);
@@ -80,19 +81,19 @@ int createServersFromConfig(std::vector<pollfd>& fd_vec,
 	const Config& config);
 
 
+int getSocket(std::vector<pollfd>& fd_vec, int port);
+int createServers(std::vector<pollfd>& fd_vec, std::map<int, Server>& server_map);
+
+
+
 // int prepareSocket(std::vector<pollfd>& fd_vec, std::map<int, Server>& server_map);
 
 int new_client(std::vector<pollfd>& fd_vec, std::map<int, Server>& server_map, std::map<int, Client>& client_map, std::size_t& i);
-void client_add_vec(int client_fd, std::vector<pollfd>& fd_vec);
-void client_add_map(std::map<int, Client>& client_map, int fd, Server* server);
 void client_error_message(size_t i, int fd, int status);
 void client_remove(size_t& i, std::map<int, Client>& client_map, std::vector<pollfd>& fd_vec);
 
 int incoming_message(pollfd& pollClient, Client& client);
-bool new_request(Client& client);
-bool search_header(Client& client);
 
-int receive_request(pollfd& client_socket, Client& client);
 void process_request(Client& client);
 int parse_header(std::string header, Request& new_request);
 bool validate_header_key(std::string& key);
@@ -102,10 +103,6 @@ void set_type(Request& request);
 bool get_response(Client& client, Request& request);
 void delete_response(Client& client);
 void post_response(Client& client);
-int post_request_header_parser(Client& client);
-int post_request_part_handler(Request& request);
-int post_request_simple_handler(Request& request);
-std::string getMimeType(const std::string &filename);
 void http_response(Client& client, Response& response);
 void redirection_response (Response& response);
 void content_response(Response& response);
@@ -115,6 +112,11 @@ void load_http_code_page(Client& client, Response& response);
 void insert(TrieNode* root, const std::string& path, unsigned char permissions);
 void deleteTrie(TrieNode* root);
 TrieNode* findBestMatch(TrieNode* root, const std::string& filepath);
+
+int cgi_parse(Client& client);
+
+
+
 
 
 #include <sstream>

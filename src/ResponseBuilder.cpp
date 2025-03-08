@@ -143,11 +143,9 @@ void http_response(Client& client, Response& response) {
     redirection_response(response);
     return ;
   }
-  if (response.http_code >= 400 && response.has_content == false) {
+  if (response.http_code >= 400 && response.has_content == false) 
     load_http_code_page(client, response);
-  }
-
-  if (response.cgi_response == true)
+  if (response.manual_response == true)
     response.content_type = "text/html";
   else
     response.content_type = getMimeType(response.request_path);

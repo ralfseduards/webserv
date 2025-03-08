@@ -115,10 +115,10 @@ void insert(TrieNode* root, const std::string& path, unsigned char permissions);
 void deleteTrie(TrieNode* root);
 TrieNode* findBestMatch(TrieNode* root, const std::string& filepath);
 
-void list_files(const char* rootPath);
 int cgi_parse(Client& client);
 
-void list_directory(Client& client);
+void handle_directory(Client& client);
+bool read_file(Client& client, Request& request);
 
 
 #include <sstream>

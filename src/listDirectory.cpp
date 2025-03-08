@@ -1,10 +1,30 @@
 #include "../includes/webserv.hpp"
+#include <ctime>
 
-/* This is a function that lists all files in our www directory recursively. */
+#define MAX_LINE_LEN 100
+
+/* extracts the file requested from the first request line */
+std::string get_file_requested(Client& client)
+{
+  std::stringstream ss(client.waitlist[0].start_line);
+  std::string req_dir;
+       
+  /* the dirname is always going to be the second item */
+  std::getline(ss, req_dir, ' ');
+  std::getline(ss, req_dir, ' ');
+  return (req_dir);
+}
+
+/* A function that receives a path of a directory as an arg, lists all files inside
+ * of it and puts a formatted html page of theese files in response.file_content to
+ * be returned to the client as directory listing.
+*/
 static int list_files(std::string rootPath, Client& client)
 {
   DIR *root;
   struct dirent *entry;
+  std::string file_requested;
+  struct stat stat_buffer;
 
   root = opendir(rootPath.c_str());
   if (root == NULL)
@@ -19,75 +39,62 @@ static int list_files(std::string rootPath, Client& client)
         return (3);   /* other errors (server error) */
     }
   }
-
+  file_requested = get_file_requested(client);
   client.waitlist[0].response.file_content.clear();
   client.waitlist[0].response.file_content += "<!DOCTYPE HTML>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n";
-  client.waitlist[0].response.file_content += "<title>Directory listing for " + rootPath + "</title>\n</head>\n<body>\n";
-  client.waitlist[0].response.file_content += "<h1>Directory listing for " + rootPath + "</h1>\n<hr>\n<ul>\n";
+  client.waitlist[0].response.file_content += "<title>Index of " + file_requested + "/</title>\n</head>\n<body>\n";
+  client.waitlist[0].response.file_content += "<h1>Index of " + file_requested + "/</h1>\n<hr>\n<pre>\n";
   while ((entry = readdir(root)) != NULL)
   {
+    std::string filename(entry->d_name);
+    std::string full_file_path = rootPath + "/" + filename;
+    std::stringstream ss;
+    std::string timestr;
 
-    client.waitlist[0].response.file_content += "<li><a href=\"" + rootPath + "\">" + rootPath + "</a></li>\n";
-    //if (entry->d_name[0] != '.')
-    //{ 
-    //  std::string fullpath = rootPath + '/' + entry->d_name;
-    //  if (entry->d_type == DT_DIR)
-    //  {
-    //    exit_status = list_files(fullpath.c_str());
-    //    if (exit_status != 0)  
-    //      return (exit_status);
-    //  }
-    //  else
-    //    std::cout << entry->d_name << '\n';
-    //}
+    stat(full_file_path.c_str(), &stat_buffer);
+    timestr = std::ctime(&stat_buffer.st_mtim.tv_sec);
+    ss.clear();
+
+    // this writing the actual line here
+    ss << filename << std::setw(MAX_LINE_LEN - filename.size()) <<  timestr.substr(0, timestr.size()-1)
+      << "\t\t" << stat_buffer.st_size << std::endl;
+    client.waitlist[0].response.file_content += ss.str();
   }
   closedir(root);
 
-  client.waitlist[0].response.file_content += "</ul>\n<hr>\n</body>\n</html>";
+  client.waitlist[0].response.file_content += "</pre>\n<hr>\n</body>\n</html>";
 
   return (0);
 }
 
+/* Gets the full path to the file requested */
 static void get_dirname(Client& client, std::string& dirname)
 {
-  std::stringstream ss(client.waitlist[0].start_line);
-       
-  /* the dirname is always going to be the second item */
-  std::getline(ss, dirname, ' ');
-  std::getline(ss, dirname, ' ');
+  dirname += client.server->root_directory;
+  dirname += "/" + client.server->routing_table[get_file_requested(client)];
 }
 
-/*
-<!DOCTYPE HTML>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<title>Directory listing for /</title>
-</head>
-<body>
-<h1>Directory listing for /</h1>
-<hr>
-<ul>
-<li><a href="01-pages/">01-pages/</a></li>
-<li><a href="02-received/">02-received/</a></li>
-<li><a href="03-stash/">03-stash/</a></li>
-<li><a href="cgi-bin/">cgi-bin/</a></li>
-<li><a href="hi">hi</a></li>
-</ul>
-<hr>
-</body>
-</html>
+/* This function is used to handle the case when the client reqeusts a directory,
+ * not a file.
+ * If the server autoindex is ON in the config, then the function will return a html
+ * page of the listed contents of the directory.
+ * If the server autoindex is OFF, the function will still look for an index.html in
+ * that directory, and if that doesnt exist, then its an error.
 */
-
-
-// TODO: check autoindex
-void list_directory(Client& client)
+void handle_directory(Client& client)
 {
   std::string dirname;
   int         retval;
 
   get_dirname(client, dirname);
-  std::clog << "-> this is the dirname:" << dirname << std::endl;
+
+  // if autoindex is off, the still try to search for an index.html file
+  if (client.server->autoindex == false)
+  {
+    client.waitlist[0].request_path += "/index.html";
+    read_file(client, client.waitlist[0]);
+    return ;
+  }
   retval = list_files(dirname.c_str(), client);
   switch (retval)
   {

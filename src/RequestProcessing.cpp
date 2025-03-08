@@ -185,14 +185,14 @@ void process_request(Client& client)
         break;
     }
   }
-
   // send the response
   send_response(client, client.waitlist[0].response);
 }
 
 void send_response(Client& client, Response& response) {
-  std::clog << "///////////////////////////////\n" << "client.fd: " << client.fd << "\nResponse:\n" << client.waitlist[0].response.content << std::endl;
-  //send the response and delete all temp data
+  std::clog << "---=========================" << "RESPONSE FOR CLIENT " << client.fd << "=========================---\n";
+  std::clog << client.waitlist[0].response.content << std::endl;
+  std::clog <<  " ---===========================================================================---" << std::endl;
   send(client.fd, response.content.c_str(), response.content.length(), 0);
   client.waitlist.erase(client.waitlist.begin());
 }

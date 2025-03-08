@@ -50,19 +50,19 @@ void load_http_code_page(Client& client, Response& response)
 }
 
 std::string getMimeType(const std::string &filename) {
-  static std::map<std::string, std::string> mimeTypes = {
-    {".html", "text/html"},
-    {".css", "text/css"},
-    {".js", "application/javascript"},
-    {".json", "application/json"},
-    {".png", "image/png"},
-    {".ico", "image/png"},
-    {".jpg", "image/jpeg"},
-    {".gif", "image/gif"},
-    {".svg", "image/svg+xml"},
-    {".txt", "text/plain"},
-    {".pdf", "application/pdf"},
-  };
+	static std::map<std::string, std::string> mimeTypes;
+
+	mimeTypes[".html"] = "text/html";
+	mimeTypes[".css"] = "text/css";
+	mimeTypes[".js"] = "application/javascript";
+	mimeTypes[".json"] = "application/json";
+	mimeTypes[".png"] = "image/png";
+	mimeTypes[".ico"] = "image/png";
+	mimeTypes[".jpg"] = "image/jpeg";
+	mimeTypes[".gif"] = "image/gif";
+	mimeTypes[".svg"] = "image/svg+xml";
+	mimeTypes[".txt"] = "text/plain";
+	mimeTypes[".pdf"] = "application/pdf";
 
   size_t dotPos = filename.rfind('.');
   if (dotPos != std::string::npos)
@@ -104,7 +104,9 @@ void content_response(Response& response)
   response.content.append(LINE_DELIMITER);
   }
   response.content.append("Content-Length: ");
-  response.content.append(std::to_string(response.file_content.length()));
+  std::stringstream ss;
+  ss << response.file_content.length();
+  response.content.append(ss.str());
   response.content.append(LINE_DELIMITER);
   response.content.append(LINE_DELIMITER);
   response.content.append(response.file_content);

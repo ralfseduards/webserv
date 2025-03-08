@@ -70,7 +70,7 @@ static bool check_method_route(Client& client)
   Server& server = *client.server;
   TrieNode* match = findBestMatch(server.root, request.request_path);
 
-  if (match == nullptr)
+  if (match == NULL)
     return (false);
   if ((match->permissions & request.type) == 0)
     return (false);
@@ -148,21 +148,25 @@ void process_request(Client& client)
         break;
 
       case POST:
-        if (client.waitlist[0].is_file_path == false)
-          client.waitlist[0].request_path = client.server->post_directory + client.waitlist[0].request_path;
+	  {
+		  if (client.waitlist[0].is_file_path == false)
+			client.waitlist[0].request_path = client.server->post_directory + client.waitlist[0].request_path;
 
-        //TODO: remove stoi
-        client.waitlist[0].content_length = std::stoi(client.waitlist[0].header_map.at("Content-Length"));
-        if (client.waitlist[0].content_length > client.server->max_body_size)
-        {
-          client.status = BODY_TOO_LARGE;
-          return ;
-        }
-        post_response(client);
-        if (client.status == RECEIVING)
-          return ;
-        break;
-
+		  std::istringstream iss(client.waitlist[0].header_map.at("Content-Length"));
+		  if (!(iss >> client.waitlist[0].content_length)) {
+				client.status = ERROR;
+				return;
+		  }
+		  if (client.waitlist[0].content_length > client.server->max_body_size)
+		  {
+			client.status = BODY_TOO_LARGE;
+			return ;
+		  }
+		  post_response(client);
+		  if (client.status == RECEIVING)
+			return ;
+		  break;
+	  }
       case DELETE:
         if (client.waitlist[0].is_file_path == false)
           client.waitlist[0].request_path = client.waitlist[0].request_path;

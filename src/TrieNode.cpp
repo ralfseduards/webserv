@@ -13,11 +13,12 @@ void insert(TrieNode* root, const std::string& path, unsigned char permissions) 
     split(path, components);
 
     TrieNode* current = root;
-    for (const std::string& component : components) {
-        if (current->children.find(component) == current->children.end()) {
-            current->children[component] = new TrieNode();
-        }
-        current = current->children[component];
+    for (std::vector<std::string>::iterator it = components.begin();
+      it != components.end(); ++it)
+    {
+        if (current->children.find(*it) == current->children.end())
+            current->children[*it] = new TrieNode();
+        current = current->children[*it];
     }
     current->permissions = permissions;
 }
@@ -26,11 +27,14 @@ TrieNode* findBestMatch(TrieNode* root, const std::string& filepath) {
     std::vector<std::string> filepathComponents;
     split(filepath, filepathComponents);
     TrieNode* current = root;
-    TrieNode* bestMatchNode = nullptr;
+    TrieNode* bestMatchNode = NULL;
 
-    for (const std::string& component : filepathComponents) {
-        if (current->children.find(component) != current->children.end()) {
-            current = current->children[component];
+	for (std::vector<std::string>::iterator it = filepathComponents.begin();
+	it != filepathComponents.end(); ++it)
+	{
+        if (current->children.find(*it) != current->children.end())
+		{
+            current = current->children[*it];
             bestMatchNode = current;
         } else {
             break;

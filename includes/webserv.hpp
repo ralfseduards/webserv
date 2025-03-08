@@ -11,7 +11,9 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
+#include <dirent.h>
 #include <limits.h>
+
 #include <iostream>
 #include <sstream>
 #include <fstream>
@@ -115,15 +117,16 @@ TrieNode* findBestMatch(TrieNode* root, const std::string& filepath);
 
 int cgi_parse(Client& client);
 
-
-
+void handle_directory(Client& client);
+bool read_file(Client& client, Request& request);
 
 
 #include <sstream>
 #include <string>
 
 template <typename T>
-std::string to_string(const T& value) {
+std::string to_string(const T& value)
+{
     std::ostringstream oss;
     oss << value;
     return oss.str();

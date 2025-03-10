@@ -25,7 +25,8 @@ static int list_files(std::string rootPath, Client& client)
   struct dirent *entry;
   std::string file_requested;
   struct stat stat_buffer;
-
+  
+  std::clog << "==>> listing directory: " << rootPath << std::endl;
   root = opendir(rootPath.c_str());
   if (root == NULL)
   {

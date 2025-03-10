@@ -23,38 +23,34 @@ void send_response(Client& client, Response& response, std::vector<pollfd>& fd_v
 
 void handle_client_write(size_t i, std::vector<pollfd>& fd_vec, std::map<int, Client>& client_map) {
     Client& client = client_map.at(fd_vec[i].fd);
-
     if (client.output_buffer.empty()) {
         // No data to send, disable POLLOUT
         fd_vec[i].events = POLLIN;
         client.ready_to_write = false;
         return;
     }
-
     // Try to send data
     ssize_t sent = send(fd_vec[i].fd, client.output_buffer.c_str(), client.output_buffer.size(), 0);
-
     if (sent > 0) {
         // Remove sent data from buffer
         client.output_buffer.erase(0, sent);
-
         // If all data sent, disable POLLOUT and clean up waitlist if needed
         if (client.output_buffer.empty()) {
             fd_vec[i].events = POLLIN;
             client.ready_to_write = false;
-
             // If we've sent a complete response for the first request, remove it
             if (!client.waitlist.empty()) {
                 client.waitlist.erase(client.waitlist.begin());
             }
-
             // If status was set to CLOSE, close connection after sending
             if (client.status == CLOSE) {
                 client.status = DISCONNECTED;
             }
         }
-    } else if (sent == -1 && errno != EAGAIN && errno != EWOULDBLOCK) {
-        // Handle errors (excluding expected non-blocking errors)
+    } else if (sent == 0) {
+        // Connection closed by client
+        client.status = DISCONNECTED;
+    } else {
         client.status = ERROR;
     }
 }

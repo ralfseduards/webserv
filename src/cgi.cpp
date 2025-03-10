@@ -164,7 +164,7 @@ int cgi_parse(Client& client)
 
     client.waitlist[0].response.has_content = true;
     client.waitlist[0].response.http_code = 200;
-    client.waitlist[0].response.manual_response = true;
+    client.waitlist[0].response.cgi_response = true;
   }
   close(pipefd[1][0]);
 

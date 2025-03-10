@@ -11,9 +11,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
-#include <dirent.h>
 #include <limits.h>
-
 #include <iostream>
 #include <sstream>
 #include <fstream>
@@ -81,22 +79,12 @@ int getSocket(std::vector<pollfd>& fd_vec, int port);
 int createServersFromConfig(std::vector<pollfd>& fd_vec,
 	std::map<int, Server>& server_map,
 	const Config& config);
-
-
 int getSocket(std::vector<pollfd>& fd_vec, int port);
-int createServers(std::vector<pollfd>& fd_vec, std::map<int, Server>& server_map);
-
-
-
-// int prepareSocket(std::vector<pollfd>& fd_vec, std::map<int, Server>& server_map);
-
 int new_client(std::vector<pollfd>& fd_vec, std::map<int, Server>& server_map, std::map<int, Client>& client_map, std::size_t& i);
 void client_error_message(size_t i, int fd, int status);
 void client_remove(size_t& i, std::map<int, Client>& client_map, std::vector<pollfd>& fd_vec);
-
-int incoming_message(pollfd& pollClient, Client& client);
-
-void process_request(Client& client);
+int incoming_message(pollfd& client_socket, Client& client, std::vector<pollfd>& fd_vec);
+void process_request(Client& client, std::vector<pollfd>& fd_vec);
 int parse_header(std::string header, Request& new_request);
 bool validate_header_key(std::string& key);
 bool validate_header_value(std::string& value);
@@ -109,25 +97,11 @@ void http_response(Client& client, Response& response);
 void redirection_response (Response& response);
 void content_response(Response& response);
 std::string return_http_code(int code);
-void send_response(Client& client, Response& response);
+void send_response(Client& client, Response& response, std::vector<pollfd>& fd_vec);
+void handle_client_write(size_t i, std::vector<pollfd>& fd_vec, std::map<int, Client>& client_map);
+void queue_for_sending(Client& client, const std::string& data, std::vector<pollfd>& fd_vec);
 void load_http_code_page(Client& client, Response& response);
 void insert(TrieNode* root, const std::string& path, unsigned char permissions);
 void deleteTrie(TrieNode* root);
 TrieNode* findBestMatch(TrieNode* root, const std::string& filepath);
-
 int cgi_parse(Client& client);
-
-void handle_directory(Client& client);
-bool read_file(Client& client, Request& request);
-
-
-#include <sstream>
-#include <string>
-
-template <typename T>
-std::string to_string(const T& value)
-{
-    std::ostringstream oss;
-    oss << value;
-    return oss.str();
-}

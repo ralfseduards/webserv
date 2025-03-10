@@ -10,7 +10,7 @@ bool search_header(Client& client) {
   return (true);
 }
 
-bool new_request(Client& client) {
+bool new_request(Client& client, std::vector<pollfd>& fd_vec) {
     Request new_req;
     new_req.type = 0;
     new_req.was_routed = false;
@@ -32,11 +32,7 @@ bool new_request(Client& client) {
             new_req.response.http_code = 400;
             new_req.response.has_content = false;
             http_response(client, new_req.response);
-            send(client.fd,
-                 new_req.response.content.c_str(),
-                 new_req.response.content.size(),
-                 0);
-
+            queue_for_sending(client, new_req.response.content, fd_vec);
             client.status = CLOSE;
         }
         return false;
@@ -49,43 +45,41 @@ bool new_request(Client& client) {
 }
 
 
-// Writes the system buffer into client request string and checks for recv error
 static int receive_request(pollfd& client_socket, Client& client)
 {
-  ssize_t bytes_received;
-
-  //Create a buffer and set it to 0
-  char request_buffer[BUFFER_SIZE + 1];
-  memset(request_buffer, 0, BUFFER_SIZE + 1);
-
-  //Read from the socket buffer in request buffer
-  bytes_received = recv(client_socket.fd, request_buffer, BUFFER_SIZE, 0);
-
-  if (bytes_received == 0)
-  {
-    std::clog << "Client Disconnected" << std::endl;
-    client.status = DISCONNECTED;
-    return (DISCONNECTED);
-  }
-  else if (bytes_received < 0)
-  {
-    std::cerr << "bytes received smaller 0" << std::endl;
-    client.status = ERROR;
-    return (ERROR);
-  }
-  else
-    std::clog << request_buffer << std::endl;
-
-  //Add the request buffer into a string
-  client.request.append(request_buffer, bytes_received);
-  std::cout << "Client request: " << client.request << std::endl;
-  std::cout << "client request ended" << std::endl;
-  return (OK);
+    ssize_t bytes_received;
+    // Create a buffer and set it to 0
+    char request_buffer[BUFFER_SIZE + 1];
+    memset(request_buffer, 0, BUFFER_SIZE + 1);
+    
+    // Read from the socket buffer in request buffer
+    bytes_received = recv(client_socket.fd, request_buffer, BUFFER_SIZE, 0);
+    
+    if (bytes_received == 0) {
+        std::clog << "Client Disconnected" << std::endl;
+        client.status = DISCONNECTED;
+        return (DISCONNECTED);
+    }
+    else if (bytes_received < 0) {
+        std::cerr << "bytes received smaller 0" << std::endl;
+        client.status = ERROR;
+        return (ERROR);
+    }
+    std::clog << "Received " << bytes_received << " bytes" << std::endl;
+    
+    // add the request buffer into a string
+    client.request.append(request_buffer, bytes_received);
+    std::cout << "Total client request size: " << client.request.size() << " bytes" << std::endl;
+    
+    return (OK);
 }
 
-int incoming_message(pollfd& client_socket, Client& client) {
+int incoming_message(pollfd& client_socket, Client& client, std::vector<pollfd>& fd_vec) {
 
-  (void)receive_request(client_socket, client);
+  int result = receive_request(client_socket, client);
+  if (result != OK) {
+    return result;
+  }
 
   //If the Client is currently receiving from previous POST, jump there
   if (client.status == RECEIVING) {
@@ -96,14 +90,13 @@ int incoming_message(pollfd& client_socket, Client& client) {
     post_response(client);
     if (client.status == RECEIVING)
       return (OK);
-    send(client.fd, client.waitlist[0].response.content.c_str(), client.waitlist[0].response.content.length(), 0);
-    client.waitlist.erase(client.waitlist.begin());
+    queue_for_sending(client, client.waitlist[0].response.content, fd_vec);
     client.status = OK;
     return (OK);
   }
 
   if (search_header(client) == true) {
-    if (new_request(client) == false)
+    if (new_request(client, fd_vec) == false)
       return (1);
   }
   else if (client.request.size() >= MAX_REQUEST_SIZE) {
@@ -115,7 +108,7 @@ int incoming_message(pollfd& client_socket, Client& client) {
     return (1);
 
   if (client.waitlist.size() > 0)
-    process_request(client);
+    process_request(client, fd_vec);
   std::cout << "Client status: " << client.status << std::endl;
   return (OK);
 }

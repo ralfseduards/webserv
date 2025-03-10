@@ -72,7 +72,7 @@ static int list_files(std::string rootPath, Client& client)
 static void get_dirname(Client& client, std::string& dirname)
 {
   dirname += client.server->root_directory;
-  dirname += "/" + client.server->routing_table[get_file_requested(client)];
+  dirname += "/" + client.waitlist[0].request_path;
 }
 
 /* This function is used to handle the case when the client reqeusts a directory,

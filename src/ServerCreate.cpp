@@ -8,7 +8,7 @@ int getSocket(std::vector<pollfd>& fd_vec, int port) {
     listening_socket = socket(AF_INET, SOCK_STREAM, 0);
     if (listening_socket == -1)
         return (-1);
-        
+
     fcntl(listening_socket, F_SETFL, O_NONBLOCK);
     addr.sin_family = AF_INET;
     addr.sin_port = htons(port);
@@ -43,30 +43,35 @@ unsigned char convertAllowedMethods(const std::vector<std::string>& methods) {
     }
     return bitmask;
 }
-
 int createServersFromConfig(std::vector<pollfd>& fd_vec,
-                            std::map<int, Server>& server_map,
-                            const Config& config)
+	std::map<int, Server>& server_map,
+	const Config& config)
 {
-    const std::vector<ParsedServer>& parsedServers = config.getServers();
+	const std::vector<ParsedServer>& parsedServers = config.getServers();
+	std::map<int, int> port_to_socket;
 
+	// Create a map to store all servers directly - avoid storing pointers to local objects
+	std::map<int, std::vector<Server> > socket_to_servers;
+
+    // First pass: create sockets and collect server configurations
     for (size_t i = 0; i < parsedServers.size(); ++i) {
         Server new_server;
 
         new_server.server_name     = parsedServers[i].getServerName();
         new_server.root_directory  = parsedServers[i].getRoot();
         new_server.page_directory  = parsedServers[i].getIndex();
-		new_server.autoindex       = parsedServers[i].getAutoIndex();
+        new_server.autoindex       = parsedServers[i].getAutoIndex();
         new_server.max_body_size   = parsedServers[i].getMaxBodySize();
         new_server.methods         = convertAllowedMethods(parsedServers[i].getAllowedMethods());
-		if (new_server.root_directory.empty()) {
-			char cwd[PATH_MAX];
-			if (getcwd(cwd, PATH_MAX) == NULL) {
-				std::cerr << "Error getting current working directory" << std::endl;
-				return ERROR;
-			}
-			new_server.root_directory = cwd;
-		}
+
+        if (new_server.root_directory.empty()) {
+            char cwd[PATH_MAX];
+            if (getcwd(cwd, PATH_MAX) == NULL) {
+                std::cerr << "Error getting current working directory" << std::endl;
+                return ERROR;
+            }
+            new_server.root_directory = cwd;
+        }
         // /upload location sets the post_directory if found
         const std::map<std::string, Location>& locs = parsedServers[i].getLocations();
         std::map<std::string, Location>::const_iterator up = locs.find("/upload");
@@ -109,16 +114,53 @@ int createServersFromConfig(std::vector<pollfd>& fd_vec,
         // Create sockets for each port
         const std::vector<int>& ports = parsedServers[i].getPorts();
         for (size_t j = 0; j < ports.size(); ++j) {
-            int sock = getSocket(fd_vec, ports[j]);
-            if (sock == -1) {
-                std::cerr << "Error creating socket on port " << ports[j] << std::endl;
-                continue;
+            int port = ports[j];
+
+            // Create socket for this port if it doesn't exist
+            if (port_to_socket.find(port) == port_to_socket.end()) {
+                int sock = getSocket(fd_vec, port);
+                if (sock == -1) {
+                    std::cerr << "Error creating socket on port " << port << std::endl;
+                    continue;
+                }
+                port_to_socket[port] = sock;
             }
-            new_server.server_socket = sock;
-            new_server.ports.push_back(ports[j]);
+
+            // Assign socket to server and add to appropriate collection
+            int socket_fd = port_to_socket[port];
+            new_server.server_socket = socket_fd;
+            new_server.ports.push_back(port);
+
+            // Add this server to the collection for this socket
+            socket_to_servers[socket_fd].push_back(new_server);
         }
-        server_map.insert(std::make_pair(new_server.server_socket, new_server));
     }
+
+    // Second pass: Build server_map and virtual_hosts
+    for (std::map<int, std::vector<Server> >::iterator it = socket_to_servers.begin();
+         it != socket_to_servers.end(); ++it) {
+
+        int socket_fd = it->first;
+        std::vector<Server>& servers_for_socket = it->second;
+
+        if (!servers_for_socket.empty()) {
+            // Set first server as default for this socket
+            server_map[socket_fd] = servers_for_socket[0];
+
+            // Add all servers to virtual_hosts map of the default server
+            for (size_t i = 0; i < servers_for_socket.size(); ++i) {
+                std::string host_name = servers_for_socket[i].server_name;
+
+                // Skip empty server names
+                if (host_name.empty()) continue;
+
+                // Add to virtual_hosts map
+                server_map[socket_fd].virtual_hosts[host_name] = servers_for_socket[i];
+                std::cout << "Added virtual host: " << host_name << " for socket " << socket_fd << std::endl;
+            }
+        }
+    }
+
     return OK;
 }
 

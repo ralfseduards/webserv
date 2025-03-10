@@ -57,11 +57,11 @@ int main(int argc, char **argv) {
     // config.printConfig();
 
     g_sig = createServersFromConfig(fd_vec, server_map, config);
-    // for (std::map<int, Server>::const_iterator it = server_map.begin();
-    //   it != server_map.end(); ++it)
-    // {
-    //   printServer(it->second);
-    // }
+    for (std::map<int, Server>::const_iterator it = server_map.begin();
+       it != server_map.end(); ++it)
+    {
+       printServer(it->second);
+    }
   while (true && !g_sig) {  // Main loop
 
     if (poll(fd_vec.data(), fd_vec.size(), -1) == -1) {
@@ -77,7 +77,7 @@ int main(int argc, char **argv) {
           if (fd_vec[i].revents & POLLIN) {
               new_client(fd_vec, server_map, client_map, i);
           }
-          
+
           // Handle server socket errors if needed
           if (fd_vec[i].revents & (POLLERR | POLLHUP | POLLNVAL)) {
               std::cerr << "Error on server socket: " << fd_vec[i].fd << std::endl;
@@ -89,35 +89,35 @@ int main(int argc, char **argv) {
           // Invalid POLL
           if (fd_vec[i].revents & POLLNVAL) {
               client_purge(i, fd_vec, client_map, POLLINVALID);
-              continue;  // Skip remaining checks after purging
+              continue;
           }
-          
+
           // Client error
           if (fd_vec[i].revents & POLLERR) {
               client_purge(i, fd_vec, client_map, ERRPOLL);
               continue;
           }
-          
+
           // Client hung up
           if (fd_vec[i].revents & POLLHUP) {
               client_purge(i, fd_vec, client_map, HUNGUP);
               continue;
           }
-          
+
           // Incoming message
           if (fd_vec[i].revents & POLLIN) {
               std::cout << "Incoming message" << std::endl;
-              incoming_message(fd_vec[i], client_map.at(fd_vec[i].fd), fd_vec);
+              incoming_message(fd_vec[i], client_map.at(fd_vec[i].fd), fd_vec, server_map);
           }
-          
+
           // Client write
           if (fd_vec[i].revents & POLLOUT) {
               std::cout << "Client write" << std::endl;
               handle_client_write(i, fd_vec, client_map);
           }
-          
+
           // Check client status
-          if (client_map.at(fd_vec[i].fd).status != OK && 
+          if (client_map.at(fd_vec[i].fd).status != OK &&
               client_map.at(fd_vec[i].fd).status != RECEIVING) {
               std::cout << "Client status: " << client_map.at(fd_vec[i].fd).status << std::endl;
               client_purge(i, fd_vec, client_map, client_map.at(fd_vec[i].fd).status);

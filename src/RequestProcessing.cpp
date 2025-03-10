@@ -123,7 +123,8 @@ void process_request(Client& client, std::vector<pollfd>& fd_vec)
   }
 
   // if request line contains /cgi-bin/, then send to cgi_parser
-  if (client.waitlist[0].start_line.find("/cgi-bin/") != std::string::npos)
+  if (client.waitlist[0].start_line.find("/cgi-bin/") != std::string::npos &&
+    client.waitlist[0].request_path[client.waitlist[0].request_path.size()-1] != '/')
   {
     cgi_parse(client);
     http_response(client, client.waitlist[0].response);

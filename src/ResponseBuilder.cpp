@@ -149,7 +149,7 @@ void http_response(Client& client, Response& response) {
     load_http_code_page(client, response);
   }
 
-  if (response.cgi_response == true)
+  if (response.manual_response == true)
     response.content_type = "text/html";
   else
     response.content_type = getMimeType(response.request_path);

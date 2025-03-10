@@ -23,6 +23,7 @@ SRC =	main.cpp \
 			SendResponse.cpp \
 			cgi.cpp \
 			cgi_env.cpp \
+			listDirectory.cpp
 
 #OBJ = $(patsubst %.cpp,$(BUILD_DIR)/%.o,$(SRC_DIR)/$(SRC))
 OBJ = $(addprefix $(BUILD_DIR)/,$(notdir $(SRC:.cpp=.o)))

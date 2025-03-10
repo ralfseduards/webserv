@@ -12,6 +12,8 @@
 #include <unistd.h>
 #include <string.h>
 #include <limits.h>
+#include <dirent.h>
+#include <iomanip>
 #include <iostream>
 #include <sstream>
 #include <fstream>
@@ -105,3 +107,5 @@ void insert(TrieNode* root, const std::string& path, unsigned char permissions);
 void deleteTrie(TrieNode* root);
 TrieNode* findBestMatch(TrieNode* root, const std::string& filepath);
 int cgi_parse(Client& client);
+void handle_directory(Client& client);
+bool read_file(Client& client, Request& request);

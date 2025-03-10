@@ -9,7 +9,7 @@ struct Response
   bool has_content;             /* did the server manage to get some file? */
   bool was_redirected;
   bool was_routed;
-  bool cgi_response;            /* was the response from cgi ? */
+  bool manual_response;            /* was the response from cgi ? */
   std::string redirection_URL;
   std::string content;
   std::string file_content;      /* the content the file requested by the client */

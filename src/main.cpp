@@ -22,7 +22,7 @@ void close_fds(std::vector<pollfd>& fd_vec) {
 
 void client_purge(std::size_t& i, std::vector<pollfd>& fd_vec, std::map<int, Client>& client_map, int status) {
   if (status == HEADER_INVAL_VERSION)
-	std::cout << "Header invalid version" << std::endl;
+	  std::cout << "Header invalid version" << std::endl;
   client_error_message(i, fd_vec[i].fd, status);
   if (status == BODY_TOO_LARGE) {
     Client& client = client_map.at(fd_vec[i].fd);
@@ -35,8 +35,7 @@ void client_purge(std::size_t& i, std::vector<pollfd>& fd_vec, std::map<int, Cli
     http_response(client, errorResp);
 
     // Send the response
-    send(fd_vec[i].fd, errorResp.content.c_str(), errorResp.content.length(), 0);
-    usleep(50000); // Ensure response is sent
+    queue_for_sending(client, errorResp.content, fd_vec);
   }
   if (status != POLLINVALID) {
     shutdown(fd_vec[i].fd, SHUT_RDWR);
@@ -71,38 +70,58 @@ int main(int argc, char **argv) {
       break;
     }
 
-    for (std::size_t i = 0; i < fd_vec.size(); ++i) {  // Loop through FDs
-
-      // Invalid POLL
-      if (fd_vec[i].revents & POLLNVAL) {
-        client_purge(i, fd_vec, client_map, POLLINVALID);
-        continue;
+    for (std::size_t i = 0; i < fd_vec.size(); ++i) {
+      // SERVER SOCKET HANDLING
+      if (i < server_map.size()) {
+          // New connection
+          if (fd_vec[i].revents & POLLIN) {
+              new_client(fd_vec, server_map, client_map, i);
+          }
+          
+          // Handle server socket errors if needed
+          if (fd_vec[i].revents & (POLLERR | POLLHUP | POLLNVAL)) {
+              std::cerr << "Error on server socket: " << fd_vec[i].fd << std::endl;
+              // Additional server error handling if needed
+          }
       }
-
-      // Client error
-      if (fd_vec[i].revents & (POLLERR)) {
-        client_purge(i, fd_vec, client_map, ERRPOLL);
-        continue;
-      }
-
-      // Client hung up
-      if (fd_vec[i].revents & (POLLHUP)) {
-        client_purge(i, fd_vec, client_map, HUNGUP);
-        continue;
-      }
-
-      // New connection
-      if ((fd_vec[i].revents & POLLIN) && (i < server_map.size())) {
-        new_client(fd_vec, server_map, client_map, i);
-      }
-
-      // Message
-      if (fd_vec[i].revents & POLLIN && i >= server_map.size()) {
-        incoming_message(fd_vec[i], client_map.at(fd_vec[i].fd));
-
-      if (client_map.at(fd_vec[i].fd).status != OK && client_map.at(fd_vec[i].fd).status != RECEIVING) {  // Check client status
-          client_purge(i, fd_vec, client_map, client_map.at(fd_vec[i].fd).status);
-        }
+      // CLIENT SOCKET HANDLING
+      else {
+          // Invalid POLL
+          if (fd_vec[i].revents & POLLNVAL) {
+              client_purge(i, fd_vec, client_map, POLLINVALID);
+              continue;  // Skip remaining checks after purging
+          }
+          
+          // Client error
+          if (fd_vec[i].revents & POLLERR) {
+              client_purge(i, fd_vec, client_map, ERRPOLL);
+              continue;
+          }
+          
+          // Client hung up
+          if (fd_vec[i].revents & POLLHUP) {
+              client_purge(i, fd_vec, client_map, HUNGUP);
+              continue;
+          }
+          
+          // Incoming message
+          if (fd_vec[i].revents & POLLIN) {
+              std::cout << "Incoming message" << std::endl;
+              incoming_message(fd_vec[i], client_map.at(fd_vec[i].fd), fd_vec);
+          }
+          
+          // Client write
+          if (fd_vec[i].revents & POLLOUT) {
+              std::cout << "Client write" << std::endl;
+              handle_client_write(i, fd_vec, client_map);
+          }
+          
+          // Check client status
+          if (client_map.at(fd_vec[i].fd).status != OK && 
+              client_map.at(fd_vec[i].fd).status != RECEIVING) {
+              std::cout << "Client status: " << client_map.at(fd_vec[i].fd).status << std::endl;
+              client_purge(i, fd_vec, client_map, client_map.at(fd_vec[i].fd).status);
+          }
       }
     }
   }

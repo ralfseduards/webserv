@@ -50,15 +50,6 @@ static bool set_route(Client& client, std::string &request_file)
   return (false);
 }
 
-/*
-static bool check_method_server(Client& client)
-{
-  if ((client.server->methods & client.waitlist[0].type) == 0)
-    return (false);
-  return (true);
-}
-*/
-
 static int set_root_dir(Client& client)
 {
   return (chdir(client.server->root_directory.c_str()));
@@ -77,14 +68,14 @@ static bool check_method_route(Client& client)
   return (true);
 }
 
-void process_request(Client& client)
+void process_request(Client& client, std::vector<pollfd>& fd_vec)
 {
   if (client.waitlist[0].type == INVALID) {
     std::clog << "Method not implemented" << std::endl;
     client.waitlist[0].response.http_code = 501;
     client.waitlist[0].response.has_content = false;
     http_response(client, client.waitlist[0].response);
-    send_response(client, client.waitlist[0].response);
+    send_response(client, client.waitlist[0].response, fd_vec);
     return;
   }
   if (client.waitlist[0].was_routed && check_method_route(client) == false) {
@@ -93,7 +84,7 @@ void process_request(Client& client)
     client.waitlist[0].response.http_code = 405;
     client.waitlist[0].response.has_content = false;
     http_response(client, client.waitlist[0].response);
-    send_response(client, client.waitlist[0].response);
+    send_response(client, client.waitlist[0].response, fd_vec);
     return;
   }
 
@@ -107,7 +98,7 @@ void process_request(Client& client)
   {
     client.waitlist[0].response.http_code = 301;
     http_response(client, client.waitlist[0].response);
-    send_response(client, client.waitlist[0].response);
+    send_response(client, client.waitlist[0].response, fd_vec);
     client.status = CLOSE;
     return ;
   }
@@ -127,7 +118,7 @@ void process_request(Client& client)
     client.waitlist[0].response.http_code = 405;
     client.waitlist[0].response.has_content = false;
     http_response(client, client.waitlist[0].response);
-    send_response(client, client.waitlist[0].response);
+    send_response(client, client.waitlist[0].response, fd_vec);
     return;
   }
 
@@ -189,14 +180,7 @@ void process_request(Client& client)
         break;
     }
   }
-  // send the response
-  send_response(client, client.waitlist[0].response);
-}
 
-void send_response(Client& client, Response& response) {
-  std::clog << "---=========================" << "RESPONSE FOR CLIENT " << client.fd << "=========================---\n";
-  std::clog << client.waitlist[0].response.content << std::endl;
-  std::clog <<  " ---===========================================================================---" << std::endl;
-  send(client.fd, response.content.c_str(), response.content.length(), 0);
-  client.waitlist.erase(client.waitlist.begin());
+  // send the response
+  send_response(client, client.waitlist[0].response, fd_vec);
 }

@@ -15,4 +15,7 @@ struct Client
   time_t timeout;
   std::string request;
   std::vector<Request> waitlist;
+  std::string output_buffer;
+  bool ready_to_write;
+  Client(): fd(-1),status(0),timeout(0),ready_to_write(false) {};
 };

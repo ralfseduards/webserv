@@ -5,7 +5,7 @@ static void client_add_vec(int client_fd, std::vector<pollfd>& fd_vec)
   pollfd client_poll_fd;
 
   client_poll_fd.fd = client_fd;
-  client_poll_fd.events = POLLIN;
+  client_poll_fd.events = POLLIN | POLLOUT;
   client_poll_fd.revents = 0;
   fd_vec.push_back(client_poll_fd);
   std::clog << "New Client added: " << fd_vec.size() << "\nFD: " << client_fd << std::endl;
@@ -13,12 +13,13 @@ static void client_add_vec(int client_fd, std::vector<pollfd>& fd_vec)
 
 static void client_add_map(std::map<int, Client>& client_map, int fd, Server* server)
 {
-  Client new_client;
-
-  new_client.fd = fd;
-  new_client.status = OK;
-  new_client.server = server;
-  client_map.insert(std::make_pair(fd, new_client));
+    Client new_client;
+    new_client.fd = fd;
+    new_client.status = OK;
+    new_client.server = server;
+    new_client.output_buffer = "";
+    new_client.ready_to_write = false; 
+    client_map.insert(std::make_pair(fd, new_client));
 }
 
 int new_client(std::vector<pollfd>& fd_vec, std::map<int, Server>& server_map, std::map<int, Client>& client_map, std::size_t& i)
@@ -27,6 +28,7 @@ int new_client(std::vector<pollfd>& fd_vec, std::map<int, Server>& server_map, s
   int client_fd = accept((*it).second.server_socket, 0,0);              // accept the client on the server
   if (client_fd < 0)
     return (1);
+  fcntl(client_fd, F_SETFL, O_NONBLOCK);
   client_add_vec(client_fd, fd_vec);
   client_add_map(client_map, client_fd, &((*it).second));
   return (OK);

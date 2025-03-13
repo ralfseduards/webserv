@@ -20,30 +20,48 @@ bool new_request(Client& client, std::vector<pollfd>& fd_vec) {
         client.request.substr(0, client.request.find("\r\n\r\n")),
         new_req
     );
-    if (client.status != OK && client.status != RECEIVING) {
 
-        if (client.status == HEADER_INVAL_COLON ||
-            client.status == HEADER_INVAL_REGEX_KEY ||
-            client.status == HEADER_INVAL_REGEX_VAL ||
-            client.status == HEADER_INVAL_VERSION ||
-			client.status == HEADER_INVAL_CONTENT_LENGTH ||
-			client.status == HEADER_INVAL_DUPLICATE ||
-            client.status == HEADER_INVAL_SIZE ){
-            new_req.response.http_code = 400;
-            new_req.response.has_content = false;
-            http_response(client, new_req.response);
-            queue_for_sending(client, new_req.response.content, fd_vec);
-            client.status = CLOSE;
+    // TODO: debug the server selection here
+    if (client.status == OK || client.status == RECEIVING) {
+        // Process Host header for virtual hosting
+        if (new_req.header_map.find("Host") != new_req.header_map.end()) {
+            std::string host = new_req.header_map["Host"];
+
+            // Strip port number if present
+            size_t colonPos = host.find(':');
+            if (colonPos != std::string::npos)
+                host = host.substr(0, colonPos);
+
+            // Check virtual_hosts map in the current server
+            if (client.server->virtual_hosts.find(host) != client.server->virtual_hosts.end()) {
+                // Create a temporary copy of the matching server
+                client.server = &client.server->virtual_hosts[host];
+            }
         }
-        return false;
-    }
-    // If header parse was OK or we are still receiving (chunked POST?), proceed
-    // Erase the parsed header from the raw request buffer
-    client.request.erase(0, client.request.find("\r\n\r\n") + 4);
-    client.waitlist.push_back(new_req);
-    return true;
-}
 
+        // Success - continue processing
+        client.request.erase(0, client.request.find("\r\n\r\n") + 4);
+        client.waitlist.push_back(new_req);
+        return true;
+    }
+
+    // Handle error cases
+    if (client.status == HEADER_INVAL_COLON ||
+        client.status == HEADER_INVAL_REGEX_KEY ||
+        client.status == HEADER_INVAL_REGEX_VAL ||
+        client.status == HEADER_INVAL_VERSION ||
+        client.status == HEADER_INVAL_CONTENT_LENGTH ||
+        client.status == HEADER_INVAL_DUPLICATE ||
+        client.status == HEADER_INVAL_SIZE) {
+
+        new_req.response.http_code = 400;
+        new_req.response.has_content = false;
+        http_response(client, new_req.response);
+        queue_for_sending(client, new_req.response.content, fd_vec);
+        client.status = CLOSE;
+    }
+    return false;
+}
 
 static int receive_request(pollfd& client_socket, Client& client)
 {
@@ -51,10 +69,10 @@ static int receive_request(pollfd& client_socket, Client& client)
     // Create a buffer and set it to 0
     char request_buffer[BUFFER_SIZE + 1];
     memset(request_buffer, 0, BUFFER_SIZE + 1);
-    
+
     // Read from the socket buffer in request buffer
     bytes_received = recv(client_socket.fd, request_buffer, BUFFER_SIZE, 0);
-    
+
     if (bytes_received == 0) {
         std::clog << "Client Disconnected" << std::endl;
         client.status = DISCONNECTED;
@@ -66,11 +84,11 @@ static int receive_request(pollfd& client_socket, Client& client)
         return (ERROR);
     }
     std::clog << "Received " << bytes_received << " bytes" << std::endl;
-    
+
     // add the request buffer into a string
     client.request.append(request_buffer, bytes_received);
     std::cout << "Total client request size: " << client.request.size() << " bytes" << std::endl;
-    
+
     return (OK);
 }
 

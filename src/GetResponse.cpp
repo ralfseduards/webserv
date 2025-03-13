@@ -21,7 +21,7 @@ bool read_file(Client& client, Request& request)
   request.response.has_content  = true;
   request.response.http_code    = 200;
   http_response(client, request.response);
-  return true;
+  return false;
 }
 
 /* Function handles the http GET response reqeuests */

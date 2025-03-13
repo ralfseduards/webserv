@@ -57,79 +57,84 @@ int main(int argc, char **argv) {
     // config.printConfig();
 
     g_sig = createServersFromConfig(fd_vec, server_map, config);
-    // for (std::map<int, Server>::const_iterator it = server_map.begin();
-    //   it != server_map.end(); ++it)
-    // {
-    //   printServer(it->second);
-    // }
-  while (true && !g_sig) {  // Main loop
+    while (true && !g_sig) {  // Main loop
 
-    if (poll(fd_vec.data(), fd_vec.size(), -1) == -1) {
-      if (g_sig != 0) continue;  // Interrupted by signal, continue loop
-      perror("poll");
-      break;
+        if (poll(fd_vec.data(), fd_vec.size(), -1) == -1) {
+            if (g_sig != 0) continue;  // Interrupted by signal, continue loop
+            perror("poll");
+            break;
+        }
+
+        for (std::size_t i = 0; i < fd_vec.size(); ++i) {
+            // SERVER SOCKET HANDLING
+            if (i < server_map.size()) {
+                // New connection
+                if (fd_vec[i].revents & POLLIN) {
+                    new_client(fd_vec, server_map, client_map, i);
+                }
+
+                // Handle server socket errors if needed
+                if (fd_vec[i].revents & (POLLERR | POLLHUP | POLLNVAL)) {
+                    std::cerr << "Error on server socket: " << fd_vec[i].fd << std::endl;
+                    // Additional server error handling if needed
+                }
+            }
+            // CLIENT SOCKET HANDLING
+            else {
+                // Invalid POLL
+                if (fd_vec[i].revents & POLLNVAL) {
+                    client_purge(i, fd_vec, client_map, POLLINVALID);
+                    continue;
+                }
+
+                // Client error
+                if (fd_vec[i].revents & POLLERR) {
+                    client_purge(i, fd_vec, client_map, ERRPOLL);
+                    continue;
+                }
+
+                // Client hung up
+                if (fd_vec[i].revents & POLLHUP) {
+                    client_purge(i, fd_vec, client_map, HUNGUP);
+                    continue;
+                }
+
+                // Incoming message
+                if (fd_vec[i].revents & POLLIN) {
+                    std::cout << "Incoming message" << std::endl;
+                    incoming_message(fd_vec[i], client_map.at(fd_vec[i].fd), fd_vec);
+                }
+
+                // Client write
+                if (fd_vec[i].revents & POLLOUT) {
+                    std::cout << "Client write" << std::endl;
+                    handle_client_write(i, fd_vec, client_map);
+                }
+
+                // Check client status
+                if (client_map.at(fd_vec[i].fd).status != OK &&
+                    client_map.at(fd_vec[i].fd).status != RECEIVING) {
+                    std::cout << "Client status: " << client_map.at(fd_vec[i].fd).status << std::endl;
+                    client_purge(i, fd_vec, client_map, client_map.at(fd_vec[i].fd).status);
+                }
+            }
+        }
     }
 
-    for (std::size_t i = 0; i < fd_vec.size(); ++i) {
-      // SERVER SOCKET HANDLING
-      if (i < server_map.size()) {
-          // New connection
-          if (fd_vec[i].revents & POLLIN) {
-              new_client(fd_vec, server_map, client_map, i);
-          }
-          
-          // Handle server socket errors if needed
-          if (fd_vec[i].revents & (POLLERR | POLLHUP | POLLNVAL)) {
-              std::cerr << "Error on server socket: " << fd_vec[i].fd << std::endl;
-              // Additional server error handling if needed
-          }
-      }
-      // CLIENT SOCKET HANDLING
-      else {
-          // Invalid POLL
-          if (fd_vec[i].revents & POLLNVAL) {
-              client_purge(i, fd_vec, client_map, POLLINVALID);
-              continue;  // Skip remaining checks after purging
-          }
-          
-          // Client error
-          if (fd_vec[i].revents & POLLERR) {
-              client_purge(i, fd_vec, client_map, ERRPOLL);
-              continue;
-          }
-          
-          // Client hung up
-          if (fd_vec[i].revents & POLLHUP) {
-              client_purge(i, fd_vec, client_map, HUNGUP);
-              continue;
-          }
-          
-          // Incoming message
-          if (fd_vec[i].revents & POLLIN) {
-              std::cout << "Incoming message" << std::endl;
-              incoming_message(fd_vec[i], client_map.at(fd_vec[i].fd), fd_vec);
-          }
-          
-          // Client write
-          if (fd_vec[i].revents & POLLOUT) {
-              std::cout << "Client write" << std::endl;
-              handle_client_write(i, fd_vec, client_map);
-          }
-          
-          // Check client status
-          if (client_map.at(fd_vec[i].fd).status != OK && 
-              client_map.at(fd_vec[i].fd).status != RECEIVING) {
-              std::cout << "Client status: " << client_map.at(fd_vec[i].fd).status << std::endl;
-              client_purge(i, fd_vec, client_map, client_map.at(fd_vec[i].fd).status);
-          }
-      }
+    close_fds(fd_vec);
+    for (std::map<int, Server>::iterator it = server_map.begin(); it != server_map.end(); ++it) {
+        for (std::map<std::string, Server>::iterator it2 = it->second.virtual_hosts.begin(); it2 != it->second.virtual_hosts.end(); ++it2) {
+            if (it->second == it2->second)
+            {
+                std::clog << "->>> cleanup: servers were the same!!!" << std::endl;
+                continue;
+            }
+            else
+                deleteTrie(it2->second.root);
+        }
+        deleteTrie(it->second.root);
     }
-  }
 
-  close_fds(fd_vec);
-  for (std::map<int, Server>::iterator it = server_map.begin(); it != server_map.end(); ++it) {
-    deleteTrie((*it).second.root);
-  }
-  std::clog << "Server terminated due to signal " << g_sig << std::endl;
-  return (0);
+    std::clog << "Server terminated due to signal " << g_sig << std::endl;
+    return (0);
 }

@@ -107,7 +107,7 @@ int main(int argc, char **argv) {
           // Incoming message
           if (fd_vec[i].revents & POLLIN) {
               std::cout << "Incoming message" << std::endl;
-              incoming_message(fd_vec[i], client_map.at(fd_vec[i].fd), fd_vec, server_map);
+              incoming_message(fd_vec[i], client_map.at(fd_vec[i].fd), fd_vec);
           }
 
           // Client write

@@ -10,7 +10,7 @@ bool search_header(Client& client) {
   return (true);
 }
 
-bool new_request(Client& client, std::vector<pollfd>& fd_vec, std::map<int, Server>& server_map) {
+bool new_request(Client& client, std::vector<pollfd>& fd_vec) {
     Request new_req;
     new_req.type = 0;
     new_req.was_routed = false;
@@ -21,6 +21,7 @@ bool new_request(Client& client, std::vector<pollfd>& fd_vec, std::map<int, Serv
         new_req
     );
 
+    // TODO: debug the server selection here
     if (client.status == OK || client.status == RECEIVING) {
         // Process Host header for virtual hosting
         if (new_req.header_map.find("Host") != new_req.header_map.end()) {
@@ -28,26 +29,13 @@ bool new_request(Client& client, std::vector<pollfd>& fd_vec, std::map<int, Serv
 
             // Strip port number if present
             size_t colonPos = host.find(':');
-            if (colonPos != std::string::npos) {
+            if (colonPos != std::string::npos)
                 host = host.substr(0, colonPos);
-            }
 
             // Check virtual_hosts map in the current server
             if (client.server->virtual_hosts.find(host) != client.server->virtual_hosts.end()) {
                 // Create a temporary copy of the matching server
-                Server matched_server = client.server->virtual_hosts[host];
-
-                // Update client's server pointer to the matched server
-                // Need to find the server in server_map that matches this host
-                for (std::map<int, Server>::iterator it = server_map.begin();
-                     it != server_map.end(); ++it) {
-                    if (it->second.server_name == host &&
-                        it->second.server_socket == client.server->server_socket) {
-                        client.server = &(it->second);
-                        std::cout << "Switched to virtual host: " << host << std::endl;
-                        break;
-                    }
-                }
+                client.server = &client.server->virtual_hosts[host];
             }
         }
 
@@ -104,7 +92,7 @@ static int receive_request(pollfd& client_socket, Client& client)
     return (OK);
 }
 
-int incoming_message(pollfd& client_socket, Client& client, std::vector<pollfd>& fd_vec, std::map<int, Server>& server_map) {
+int incoming_message(pollfd& client_socket, Client& client, std::vector<pollfd>& fd_vec) {
 
   int result = receive_request(client_socket, client);
   if (result != OK) {
@@ -126,7 +114,7 @@ int incoming_message(pollfd& client_socket, Client& client, std::vector<pollfd>&
   }
 
   if (search_header(client) == true) {
-    if (new_request(client, fd_vec, server_map) == false)
+    if (new_request(client, fd_vec) == false)
       return (1);
   }
   else if (client.request.size() >= MAX_REQUEST_SIZE) {

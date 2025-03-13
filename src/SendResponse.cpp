@@ -3,7 +3,6 @@
 void queue_for_sending(Client& client, const std::string& data, std::vector<pollfd>& fd_vec) {
     client.output_buffer += data;
     client.ready_to_write = true;
-
     // Find client's pollfd and enable POLLOUT
     for (size_t i = 0; i < fd_vec.size(); i++) {
         if (fd_vec[i].fd == client.fd) {
@@ -15,12 +14,14 @@ void queue_for_sending(Client& client, const std::string& data, std::vector<poll
 
 void send_response(Client& client, Response& response, std::vector<pollfd>& fd_vec) {
     std::clog << "---=========================" << "RESPONSE FOR CLIENT " << client.fd << "=========================---\n";
-    std::clog << client.waitlist[0].response.content << std::endl;
+	std::clog << response.content << std::endl;
     std::clog <<  " ---===========================================================================---" << std::endl;
+
     queue_for_sending(client, response.content, fd_vec);
 }
 
 void handle_client_write(size_t i, std::vector<pollfd>& fd_vec, std::map<int, Client>& client_map) {
+	std::clog << "Handling client write" << std::endl;
     Client& client = client_map.at(fd_vec[i].fd);
     if (client.output_buffer.empty()) {
         // No data to send, disable POLLOUT
@@ -47,9 +48,10 @@ void handle_client_write(size_t i, std::vector<pollfd>& fd_vec, std::map<int, Cl
             }
         }
     } else if (sent == 0) {
-        // Connection closed by client
+        std::clog << "Client disconnected !!!" << std::endl;
         client.status = DISCONNECTED;
     } else {
+		std::cerr << "Error sending data to client" << std::endl;
         client.status = ERROR;
     }
 }

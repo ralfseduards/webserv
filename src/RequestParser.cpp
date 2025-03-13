@@ -89,6 +89,7 @@ static int receive_request(pollfd& client_socket, Client& client)
   client.request.append(request_buffer, bytes_received);
   std::cout << "Total client request size: " << client.request.size() << " bytes" << std::endl;
 
+
   return (OK);
 }
 

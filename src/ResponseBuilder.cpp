@@ -111,6 +111,7 @@ static void content_response(Response& response)
   response.content.append(response.file_content);
   response.content.append(LINE_DELIMITER);
   response.content.append(LINE_DELIMITER);
+
 }
 
 /* Takes the integer repsonse code and returns a string with the full response status */
@@ -149,9 +150,9 @@ void http_response(Client& client, Response& response) {
   }
 
   if (response.manual_response == true)
-    response.content_type = "text/html";
+	  response.content_type = "text/html";
   else
-    response.content_type = getMimeType(response.request_path);
+	  response.content_type = getMimeType(response.request_path);
 
   std::cout <<"mime type is "<< response.content_type << std::endl;
   content_response(response);

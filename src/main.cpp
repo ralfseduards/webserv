@@ -35,7 +35,9 @@ void client_purge(std::size_t& i, std::vector<pollfd>& fd_vec, std::map<int, Cli
         http_response(client, errorResp);
 
         // Send the response
-        queue_for_sending(client, errorResp.content, fd_vec);
+        send_response(client, errorResp, fd_vec);
+		// client.status = CLOSE;
+		// return;
     }
     if (status != POLLINVALID) {
         shutdown(fd_vec[i].fd, SHUT_RDWR);

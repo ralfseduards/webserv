@@ -1,6 +1,5 @@
 #include "../includes/cgi.hpp"
 
-
 int cgi_error(const char *str, Client& client, int code)
 {
   std::perror(str);
@@ -90,7 +89,7 @@ int cgi_parse(Client& client)
 
   custom_envp = new char *[ENVP_SIZE + 1];
 
-  create_new_envp(client, custom_envp);
+    create_new_envp(client, custom_envp);
   if (pipe(pipefd[0]) == -1)
     return(cgi_error("cgi pipe1()", client, 500));
   if (pipe(pipefd[1]) == -1)
@@ -103,33 +102,33 @@ int cgi_parse(Client& client)
     return (cgi_error("cgi fork()", client, 500));
   else if (pid == 0)
   {
-    // set input from parent (write end is already closed before fork)
-    dup2(pipefd[0][0], 0);
-    close(pipefd[0][0]);
+  // set input from parent (write end is already closed before fork)
+  dup2(pipefd[0][0], 0);
+  close(pipefd[0][0]);
 
-    // close read end
-    close(pipefd[1][0]);
-    dup2(pipefd[1][1], 1);
-    close(pipefd[1][1]);
+  // close read end
+  close(pipefd[1][0]);
+  dup2(pipefd[1][1], 1);
+  close(pipefd[1][1]);
 
-    get_program_name(program_name, program_dir, custom_envp, client);
+  get_program_name(program_name, program_dir, custom_envp, client);
 
-    if (chdir(program_dir.c_str()) != 0)
-      exit(cgi_error("cgi child chdir()", client, 404));
-    program_args[0] = const_cast<char *>(program_name.c_str());
-    program_args[1] = NULL;
+  if (chdir(program_dir.c_str()) != 0)
+    exit(cgi_error("cgi child chdir()", client, 404));
+  program_args[0] = const_cast<char *>(program_name.c_str());
+  program_args[1] = NULL;
 
-    execve(program_name.c_str(), program_args, custom_envp);
-    switch (errno)
-    {
-      case ENOENT:
-        exit(cgi_error("cgi child execve()", client, 404));
-      case EACCES:
-        exit(cgi_error("cgi child execve()", client, 403));
-      default:
-        exit(cgi_error("cgi child execve()", client, 500));
-    }
+  execve(program_name.c_str(), program_args, custom_envp);
+  switch (errno)
+  {
+    case ENOENT:
+      exit(cgi_error("cgi child execve()", client, 404));
+    case EACCES:
+      exit(cgi_error("cgi child execve()", client, 403));
+    default:
+      exit(cgi_error("cgi child execve()", client, 500));
   }
+}
 
   close(pipefd[0][0]); // close the read end of the read pipe
   status = smart_wait(pid);
@@ -154,7 +153,7 @@ int cgi_parse(Client& client)
     client.waitlist[0].response.has_content = false;
   }
   else
-  {
+{
     /* normal execution */
     while ((bytes_read = read(pipefd[1][0], read_buffer, 256)) > 0)
     {

@@ -23,26 +23,26 @@ static bool is_file_path(Request& request)
 static bool set_route(Client& client, std::string &request_file)
 {
   std::map<std::string, std::string>::const_iterator it =
-            client.server->routing_table.find(request_file);
+    client.server->routing_table.find(request_file);
 
   if (it != client.server->routing_table.end())
   {
-      request_file = it->second;
-      client.waitlist[0].was_routed = true;
-      return (true);
+    request_file = it->second;
+    client.waitlist[0].was_routed = true;
+    return (true);
   }
   for (it = client.server->routing_table.begin(); it != client.server->routing_table.end(); ++it)
   {
-      const std::string &locPath = it->first;  // e.g. "/upload"
-      if (locPath.size() > 1 && locPath != "/" &&
-          request_file.compare(0, locPath.size(), locPath) == 0)
-      {
-          std::string remainder = request_file.substr(locPath.size());
-          std::string expandedPath = it->second + remainder;
-          request_file = expandedPath;
-          client.waitlist[0].was_routed = true;
-          return (true);
-      }
+    const std::string &locPath = it->first;  // e.g. "/upload"
+    if (locPath.size() > 1 && locPath != "/" &&
+      request_file.compare(0, locPath.size(), locPath) == 0)
+    {
+      std::string remainder = request_file.substr(locPath.size());
+      std::string expandedPath = it->second + remainder;
+      request_file = expandedPath;
+      client.waitlist[0].was_routed = true;
+      return (true);
+    }
   }
   // If no prefix matched, not routed
 
@@ -130,55 +130,55 @@ void process_request(Client& client, std::vector<pollfd>& fd_vec)
     http_response(client, client.waitlist[0].response);
   }
   else
-  {
+{
     switch (client.waitlist[0].type)
     {
       case GET:
 
-        if (get_response(client, client.waitlist[0]) == true)
-          client.status = CLOSE;
-        break;
+	if (get_response(client, client.waitlist[0]) == true)
+	  client.status = CLOSE;
+	break;
 
       case POST:
-	  {
-		  if (client.waitlist[0].is_file_path == false)
-			client.waitlist[0].request_path = client.server->post_directory + client.waitlist[0].request_path;
+	{
+	  if (client.waitlist[0].is_file_path == false)
+	    client.waitlist[0].request_path = client.server->post_directory + client.waitlist[0].request_path;
 
-		  std::istringstream iss(client.waitlist[0].header_map.at("Content-Length"));
-		  if (!(iss >> client.waitlist[0].content_length)) {
-				client.status = ERROR;
-				return;
-		  }
-		  if (client.waitlist[0].content_length > client.server->max_body_size)
-		  {
-			client.status = BODY_TOO_LARGE;
-			return ;
-		  }
-		  post_response(client);
-		  if (client.status == RECEIVING)
-			return ;
-		  break;
+	  std::istringstream iss(client.waitlist[0].header_map.at("Content-Length"));
+	  if (!(iss >> client.waitlist[0].content_length)) {
+	    client.status = ERROR;
+	    return;
 	  }
+	  if (client.waitlist[0].content_length > client.server->max_body_size)
+	  {
+	    client.status = BODY_TOO_LARGE;
+	    return ;
+	  }
+	  post_response(client);
+	  if (client.status == RECEIVING)
+	    return ;
+	  break;
+	}
       case DELETE:
-        if (client.waitlist[0].is_file_path == false)
-          client.waitlist[0].request_path = client.waitlist[0].request_path;
-        delete_response(client);
-        break;
+	if (client.waitlist[0].is_file_path == false)
+	  client.waitlist[0].request_path = client.waitlist[0].request_path;
+	delete_response(client);
+	break;
 
       case HEAD:
-        break;
+	break;
 
       case INVALID:
-        client.waitlist[0].response.http_code = 501;
-        client.waitlist[0].response.has_content = false;
-        http_response(client, client.waitlist[0].response);
-        break;
+	client.waitlist[0].response.http_code = 501;
+	client.waitlist[0].response.has_content = false;
+	http_response(client, client.waitlist[0].response);
+	break;
 
       default:
-        client.waitlist[0].response.http_code = 501;
-        client.waitlist[0].response.has_content = false;
-        http_response(client, client.waitlist[0].response);
-        break;
+	client.waitlist[0].response.http_code = 501;
+	client.waitlist[0].response.has_content = false;
+	http_response(client, client.waitlist[0].response);
+	break;
     }
   }
 

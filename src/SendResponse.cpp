@@ -1,4 +1,3 @@
-
 #include "../includes/webserv.hpp"
 
 void queue_for_sending(Client& client, const std::string& data, std::vector<pollfd>& fd_vec) {
@@ -15,10 +14,10 @@ void queue_for_sending(Client& client, const std::string& data, std::vector<poll
 }
 
 void send_response(Client& client, Response& response, std::vector<pollfd>& fd_vec) {
-  std::clog << "---=========================" << "RESPONSE FOR CLIENT " << client.fd << "=========================---\n";
-  std::clog << client.waitlist[0].response.content << std::endl;
-  std::clog <<  " ---===========================================================================---" << std::endl;
-  queue_for_sending(client, response.content, fd_vec);
+    std::clog << "---=========================" << "RESPONSE FOR CLIENT " << client.fd << "=========================---\n";
+    std::clog << client.waitlist[0].response.content << std::endl;
+    std::clog <<  " ---===========================================================================---" << std::endl;
+    queue_for_sending(client, response.content, fd_vec);
 }
 
 void handle_client_write(size_t i, std::vector<pollfd>& fd_vec, std::map<int, Client>& client_map) {

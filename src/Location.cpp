@@ -5,30 +5,30 @@
 // Default Constructor
 Location::Location()
     : path(""),
-      root(""),
-      index(""),
-      autoindex(false),
-      methods(),
-      is_cgi(false),
-      cgi_extension(""),
-      cgi_pass(""),
-      error_pages(),
-      client_max_body_size(0),
-      return_url() {}
+    root(""),
+    index(""),
+    autoindex(false),
+    methods(),
+    is_cgi(false),
+    cgi_extension(""),
+    cgi_pass(""),
+    error_pages(),
+    client_max_body_size(0),
+    return_url() {}
 
 // Constructor that takes a ParsedServer instead of Server
 Location::Location(const ParsedServer &server)
     : path(""), // Default path
-      root(server.getRoot()),
-      index(""),
-      autoindex(server.getAutoIndex()),
-      methods(server.getAllowedMethods()),
-      is_cgi(false),
-      cgi_extension(""),
-      cgi_pass(""),
-      error_pages(server.getErrorPages()),
-      client_max_body_size(server.getMaxBodySize()),
-      return_url()
+    root(server.getRoot()),
+    index(""),
+    autoindex(server.getAutoIndex()),
+    methods(server.getAllowedMethods()),
+    is_cgi(false),
+    cgi_extension(""),
+    cgi_pass(""),
+    error_pages(server.getErrorPages()),
+    client_max_body_size(server.getMaxBodySize()),
+    return_url()
 {
 }
 
@@ -169,7 +169,7 @@ void Location::printLocation() const {
 
     std::cout << "Error Pages:" << std::endl;
     for (std::map<int, std::string>::const_iterator it = error_pages.begin();
-         it != error_pages.end(); ++it) {
+    it != error_pages.end(); ++it) {
         std::cout << "Error Code: " << it->first << " => Page: " << it->second << std::endl;
     }
 
@@ -178,9 +178,9 @@ void Location::printLocation() const {
     if (!return_url.empty()) {
         std::cout << "Return URLs:" << std::endl;
         for (std::map<int, std::string>::const_iterator it = return_url.begin();
-             it != return_url.end(); ++it) {
+        it != return_url.end(); ++it) {
             std::cout << "Status Code: " << it->first
-                      << " => URL: " << it->second << std::endl;
+                << " => URL: " << it->second << std::endl;
         }
     }
 }

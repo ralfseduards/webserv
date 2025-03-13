@@ -1,7 +1,7 @@
 #include "../includes/webserv.hpp"
 
 
-int post_request_simple_handler(Request& request)
+static int post_request_simple_handler(Request& request)
 {
   std::ofstream outfile("Outfile");
   outfile << request.body;

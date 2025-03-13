@@ -2,7 +2,6 @@
 
 void load_http_code_page(Client& client, Response& response)
 {
-
   std::map<int, std::string>::iterator it =
     client.server->errorPages.find(response.http_code);
   if (it != client.server->errorPages.end()) {
@@ -12,8 +11,8 @@ void load_http_code_page(Client& client, Response& response)
     if (infile.is_open()) {
       // read custom error page
       response.file_content = std::string(
-          (std::istreambuf_iterator<char>(infile)),
-          std::istreambuf_iterator<char>());
+	(std::istreambuf_iterator<char>(infile)),
+	std::istreambuf_iterator<char>());
       response.request_path = customPath;
       return;
     }
@@ -49,20 +48,20 @@ void load_http_code_page(Client& client, Response& response)
   }
 }
 
-std::string getMimeType(const std::string &filename) {
-	static std::map<std::string, std::string> mimeTypes;
+static std::string getMimeType(const std::string &filename) {
+  static std::map<std::string, std::string> mimeTypes;
 
-	mimeTypes[".html"] = "text/html";
-	mimeTypes[".css"] = "text/css";
-	mimeTypes[".js"] = "application/javascript";
-	mimeTypes[".json"] = "application/json";
-	mimeTypes[".png"] = "image/png";
-	mimeTypes[".ico"] = "image/png";
-	mimeTypes[".jpg"] = "image/jpeg";
-	mimeTypes[".gif"] = "image/gif";
-	mimeTypes[".svg"] = "image/svg+xml";
-	mimeTypes[".txt"] = "text/plain";
-	mimeTypes[".pdf"] = "application/pdf";
+  mimeTypes[".html"] = "text/html";
+  mimeTypes[".css"] = "text/css";
+  mimeTypes[".js"] = "application/javascript";
+  mimeTypes[".json"] = "application/json";
+  mimeTypes[".png"] = "image/png";
+  mimeTypes[".ico"] = "image/png";
+  mimeTypes[".jpg"] = "image/jpeg";
+  mimeTypes[".gif"] = "image/gif";
+  mimeTypes[".svg"] = "image/svg+xml";
+  mimeTypes[".txt"] = "text/plain";
+  mimeTypes[".pdf"] = "application/pdf";
 
   size_t dotPos = filename.rfind('.');
   if (dotPos != std::string::npos)
@@ -76,7 +75,7 @@ std::string getMimeType(const std::string &filename) {
 }
 
 /* Response builder for redirection */
-void redirection_response (Response& response) {
+static void redirection_response (Response& response) {
   response.content = http_version;
   response.content.append(" ");
   response.content.append(response.code_string);
@@ -90,7 +89,7 @@ void redirection_response (Response& response) {
 }
 
 /* Response builder for every request that doesnt involve redirection */
-void content_response(Response& response)
+static void content_response(Response& response)
 {
   response.content = http_version;
   response.content.append(" ");
@@ -100,8 +99,8 @@ void content_response(Response& response)
   response.content.append(response.content_type);
   response.content.append(LINE_DELIMITER);
   if (response.http_code > 400) {
-	response.content.append("Connection close");
-  response.content.append(LINE_DELIMITER);
+    response.content.append("Connection close");
+    response.content.append(LINE_DELIMITER);
   }
   response.content.append("Content-Length: ");
   std::stringstream ss;
@@ -115,7 +114,7 @@ void content_response(Response& response)
 }
 
 /* Takes the integer repsonse code and returns a string with the full response status */
-std::string return_http_code(int code)
+static std::string return_http_code(int code)
 {
   switch (code)
   {

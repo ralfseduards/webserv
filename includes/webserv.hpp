@@ -73,32 +73,21 @@ enum port {
 #define http_version "HTTP/1.1"
 #define LINE_DELIMITER "\r\n"
 
-
-void signal_handler(int sig);
 void close_fds(std::vector<pollfd>& fd_vec);
 void printServer(const Server& srv);
-int getSocket(std::vector<pollfd>& fd_vec, int port);
 int createServersFromConfig(std::vector<pollfd>& fd_vec,
 	std::map<int, Server>& server_map,
 	const Config& config);
-int getSocket(std::vector<pollfd>& fd_vec, int port);
 int new_client(std::vector<pollfd>& fd_vec, std::map<int, Server>& server_map, std::map<int, Client>& client_map, std::size_t& i);
 void client_error_message(size_t i, int fd, int status);
 void client_remove(size_t& i, std::map<int, Client>& client_map, std::vector<pollfd>& fd_vec);
 int incoming_message(pollfd& client_socket, Client& client, std::vector<pollfd>& fd_vec);
 void process_request(Client& client, std::vector<pollfd>& fd_vec);
 int parse_header(std::string header, Request& new_request);
-bool validate_header_key(std::string& key);
-bool validate_header_value(std::string& value);
-int set_request_path(Request& request);
-void set_type(Request& request);
 bool get_response(Client& client, Request& request);
 void delete_response(Client& client);
 void post_response(Client& client);
 void http_response(Client& client, Response& response);
-void redirection_response (Response& response);
-void content_response(Response& response);
-std::string return_http_code(int code);
 void send_response(Client& client, Response& response, std::vector<pollfd>& fd_vec);
 void handle_client_write(size_t i, std::vector<pollfd>& fd_vec, std::map<int, Client>& client_map);
 void queue_for_sending(Client& client, const std::string& data, std::vector<pollfd>& fd_vec);

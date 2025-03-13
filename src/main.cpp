@@ -8,42 +8,41 @@
 volatile std::sig_atomic_t g_sig = 0;
 
 void signal_handler(int sig) {
-  g_sig = sig;
-  signal(SIGINT, SIG_DFL);  // Restore default behavior
+    g_sig = sig;
+    signal(SIGINT, SIG_DFL);  // Restore default behavior
 }
 
 void close_fds(std::vector<pollfd>& fd_vec) {
-  std::clog << "Shutting down" << std::endl;
-  for (size_t i = 0; i < fd_vec.size(); ++i) {
-    shutdown(fd_vec[i].fd, SHUT_RDWR);
-    close(fd_vec[i].fd);
-  }
+    std::clog << "Shutting down" << std::endl;
+    for (size_t i = 0; i < fd_vec.size(); ++i) {
+        shutdown(fd_vec[i].fd, SHUT_RDWR);
+        close(fd_vec[i].fd);
+    }
 }
 
 void client_purge(std::size_t& i, std::vector<pollfd>& fd_vec, std::map<int, Client>& client_map, int status) {
-  if (status == HEADER_INVAL_VERSION)
-	  std::cout << "Header invalid version" << std::endl;
-  client_error_message(i, fd_vec[i].fd, status);
-  if (status == BODY_TOO_LARGE) {
-    Client& client = client_map.at(fd_vec[i].fd);
-    Response errorResp;
-    errorResp.http_code = 413;
-    errorResp.has_content = true;
+    if (status == HEADER_INVAL_VERSION)
+        std::cout << "Header invalid version" << std::endl;
+    client_error_message(i, fd_vec[i].fd, status);
+    if (status == BODY_TOO_LARGE) {
+        Client& client = client_map.at(fd_vec[i].fd);
+        Response errorResp;
+        errorResp.http_code = 413;
+        errorResp.has_content = true;
 
-    // Load error page and format response
-    load_http_code_page(client, errorResp);
-    http_response(client, errorResp);
+        // Load error page and format response
+        load_http_code_page(client, errorResp);
+        http_response(client, errorResp);
 
-    // Send the response
-    queue_for_sending(client, errorResp.content, fd_vec);
-  }
-  if (status != POLLINVALID) {
-    shutdown(fd_vec[i].fd, SHUT_RDWR);
-    close(fd_vec[i].fd);
-  }
-  client_remove(i, client_map, fd_vec);
+        // Send the response
+        queue_for_sending(client, errorResp.content, fd_vec);
+    }
+    if (status != POLLINVALID) {
+        shutdown(fd_vec[i].fd, SHUT_RDWR);
+        close(fd_vec[i].fd);
+    }
+    client_remove(i, client_map, fd_vec);
 }
-
 
 int main(int argc, char **argv) {
     signal(SIGINT, signal_handler);

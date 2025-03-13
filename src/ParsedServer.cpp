@@ -4,9 +4,9 @@
 // Constructor
 ParsedServer::ParsedServer(const Config &config)
     : dir_list(""),
-      autoindex(config.getGlobalAutoIndex()),
-      client_max_body_size(config.getMaxBodySize()),
-      allowed_methods(config.getGlobalAllowedMethods())
+    autoindex(config.getGlobalAutoIndex()),
+    client_max_body_size(config.getMaxBodySize()),
+    allowed_methods(config.getGlobalAllowedMethods())
 {
     errorPages = config.getErrorPages();
 }
@@ -161,14 +161,14 @@ void ParsedServer::printServer() const {
 
     std::cout << "Error Pages:" << std::endl;
     for (std::map<int, std::string>::const_iterator it = errorPages.begin();
-         it != errorPages.end(); ++it) {
+    it != errorPages.end(); ++it) {
         std::cout << "Error Code: " << it->first
-                  << " => Page: " << it->second << std::endl;
+            << " => Page: " << it->second << std::endl;
     }
 
     std::cout << "\n=== Locations ===" << std::endl;
     for (std::map<std::string, Location>::const_iterator it = locations.begin();
-         it != locations.end(); ++it) {
+    it != locations.end(); ++it) {
         std::cout << "\nLocation Path: " << it->first << std::endl;
         it->second.printLocation();
     }

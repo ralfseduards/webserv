@@ -1,7 +1,6 @@
 #include "../includes/webserv.hpp"
 
-
-int getSocket(std::vector<pollfd>& fd_vec, int port) {
+static int getSocket(std::vector<pollfd>& fd_vec, int port) {
     struct sockaddr_in addr;
     int listening_socket;
 
@@ -31,7 +30,7 @@ int getSocket(std::vector<pollfd>& fd_vec, int port) {
     return (listening_socket);
 }
 
-unsigned char convertAllowedMethods(const std::vector<std::string>& methods) {
+static unsigned char convertAllowedMethods(const std::vector<std::string>& methods) {
     unsigned char bitmask = 0;
     for (size_t i = 0; i < methods.size(); ++i) {
         if (methods[i] == "GET")
@@ -44,14 +43,14 @@ unsigned char convertAllowedMethods(const std::vector<std::string>& methods) {
     return bitmask;
 }
 int createServersFromConfig(std::vector<pollfd>& fd_vec,
-	std::map<int, Server>& server_map,
-	const Config& config)
+                            std::map<int, Server>& server_map,
+                            const Config& config)
 {
-	const std::vector<ParsedServer>& parsedServers = config.getServers();
-	std::map<int, int> port_to_socket;
+    const std::vector<ParsedServer>& parsedServers = config.getServers();
+    std::map<int, int> port_to_socket;
 
-	// Create a map to store all servers directly - avoid storing pointers to local objects
-	std::map<int, std::vector<Server> > socket_to_servers;
+    // Create a map to store all servers directly - avoid storing pointers to local objects
+    std::map<int, std::vector<Server> > socket_to_servers;
 
     // First pass: create sockets and collect server configurations
     for (size_t i = 0; i < parsedServers.size(); ++i) {
@@ -84,12 +83,12 @@ int createServersFromConfig(std::vector<pollfd>& fd_vec,
         const std::map<std::string, Location>& locations = parsedServers[i].getLocations();
 
         for (std::map<std::string, Location>::const_iterator it = locations.begin();
-             it != locations.end(); ++it)
+        it != locations.end(); ++it)
         {
             // Build a file-system path to insert into the trie
             std::string fileSystemPath = it->second.getRoot().empty()
-                                         ? new_server.root_directory
-                                         : it->second.getRoot();
+                ? new_server.root_directory
+                : it->second.getRoot();
 
             unsigned char locBitmask = convertAllowedMethods(it->second.getMethods());
             insert(new_server.root, fileSystemPath, locBitmask);
@@ -138,7 +137,7 @@ int createServersFromConfig(std::vector<pollfd>& fd_vec,
 
     // Second pass: Build server_map and virtual_hosts
     for (std::map<int, std::vector<Server> >::iterator it = socket_to_servers.begin();
-         it != socket_to_servers.end(); ++it) {
+    it != socket_to_servers.end(); ++it) {
 
         int socket_fd = it->first;
         std::vector<Server>& servers_for_socket = it->second;
@@ -178,7 +177,7 @@ void printServer(const Server& srv)
     std::cout << std::endl;
     std::cout << "methods (bitmask): "  << static_cast<int>(srv.methods) << std::endl;
     std::cout << "max_body_size: "      << srv.max_body_size << std::endl;
-	std::cout << "autoindex: "          << srv.autoindex << std::endl;
+    std::cout << "autoindex: "          << srv.autoindex << std::endl;
     std::cout << "root (TrieNode*): "   << srv.root << std::endl;
     std::cout << "root_directory: "     << srv.root_directory << std::endl;
     std::cout << "page_directory: "     << srv.page_directory << std::endl;
@@ -186,21 +185,21 @@ void printServer(const Server& srv)
 
     std::cout << "\nrouting_table:" << std::endl;
     for (std::map<std::string, std::string>::const_iterator it = srv.routing_table.begin();
-         it != srv.routing_table.end(); ++it)
+    it != srv.routing_table.end(); ++it)
     {
         std::cout << "  " << it->first << " => " << it->second << std::endl;
     }
 
     std::cout << "\nredirection_table:" << std::endl;
     for (std::map<std::string, std::string>::const_iterator it = srv.redirection_table.begin();
-         it != srv.redirection_table.end(); ++it)
+    it != srv.redirection_table.end(); ++it)
     {
         std::cout << "  " << it->first << " => " << it->second << std::endl;
     }
 
     std::cout << "\nerrorPages:" << std::endl;
     for (std::map<int, std::string>::const_iterator it = srv.errorPages.begin();
-         it != srv.errorPages.end(); ++it)
+    it != srv.errorPages.end(); ++it)
     {
         std::cout << "  " << it->first << " => " << it->second << std::endl;
     }

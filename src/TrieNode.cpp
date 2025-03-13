@@ -14,7 +14,7 @@ void insert(TrieNode* root, const std::string& path, unsigned char permissions) 
 
     TrieNode* current = root;
     for (std::vector<std::string>::iterator it = components.begin();
-      it != components.end(); ++it)
+    it != components.end(); ++it)
     {
         if (current->children.find(*it) == current->children.end())
             current->children[*it] = new TrieNode();
@@ -29,11 +29,11 @@ TrieNode* findBestMatch(TrieNode* root, const std::string& filepath) {
     TrieNode* current = root;
     TrieNode* bestMatchNode = NULL;
 
-	for (std::vector<std::string>::iterator it = filepathComponents.begin();
-	it != filepathComponents.end(); ++it)
-	{
+    for (std::vector<std::string>::iterator it = filepathComponents.begin();
+    it != filepathComponents.end(); ++it)
+    {
         if (current->children.find(*it) != current->children.end())
-		{
+        {
             current = current->children[*it];
             bestMatchNode = current;
         } else {

@@ -60,7 +60,7 @@ static void parse_first_line(const std::string& line, char **&custom_envp)
     custom_envp[4] = cpp_strdup("QUERY_STRING=" + tokens[1].substr(end+1));
   }
   else
-  {
+{
     custom_envp[3] = cpp_strdup("SCRIPT_NAME=" + tokens[1]);
     custom_envp[4] = cpp_strdup("QUERY_STRING=");
   }

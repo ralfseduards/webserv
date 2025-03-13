@@ -4,7 +4,7 @@
 #define MAX_LINE_LEN 100
 
 /* extracts the file requested from the first request line */
-std::string get_file_requested(Client& client)
+static std::string get_file_requested(Client& client)
 {
   std::stringstream ss(client.waitlist[0].start_line);
   std::string req_dir;
@@ -25,7 +25,7 @@ static int list_files(std::string rootPath, Client& client)
   struct dirent *entry;
   std::string file_requested;
   struct stat stat_buffer;
-  
+
   std::clog << "==>> listing directory: " << rootPath << std::endl;
   root = opendir(rootPath.c_str());
   if (root == NULL)

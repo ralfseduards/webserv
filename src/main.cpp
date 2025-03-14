@@ -126,10 +126,7 @@ int main(int argc, char **argv) {
     for (std::map<int, Server>::iterator it = server_map.begin(); it != server_map.end(); ++it) {
         for (std::map<std::string, Server>::iterator it2 = it->second.virtual_hosts.begin(); it2 != it->second.virtual_hosts.end(); ++it2) {
             if (it->second == it2->second)
-            {
-                std::clog << "->>> cleanup: servers were the same!!!" << std::endl;
                 continue;
-            }
             else
                 deleteTrie(it2->second.root);
         }
